@@ -1,0 +1,15 @@
+.{
+    .name = .zip,
+    .version = "0.0.1",
+    .minimum_zig_version = "0.16.0",
+    .fingerprint = 0x421d9546e580bad7,
+
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "test",
+        "README.md",
+        "LICENSE",
+    }
+}

@@ -1,0 +1,6 @@
+.zig-cache/
+zig-out/
+.build/
+
+#copy of module so ignore it
+test/zip/
