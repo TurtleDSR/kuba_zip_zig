@@ -173,44 +173,21 @@ var z = try zip.openStream(null, zip.defaultCompressionLevel, 'w');
 }
 ```
 
-```c
-char *outbuf = NULL;
-size_t outbufsize = 0;
-
-const char *inbuf = "Append some data here...\0";
-struct zip_t *zip = zip_stream_open(NULL, 0, ZIP_DEFAULT_COMPRESSION_LEVEL, 'w');
-{
-    zip_entry_open(zip, "foo-1.txt");
-    {
-        zip_entry_write(zip, inbuf, strlen(inbuf));
-    }
-    zip_entry_close(zip);
-
-    /* copy compressed stream into outbuf */
-    zip_stream_copy(zip, (void **)&outbuf, &outbufsize);
-}
-zip_stream_close(zip);
-
-free(outbuf);
-```
-
 * Extract a zip entry into memory (stream API).
+```zig
+var buffer: []u8 = undefined;
+defer allocator.free(buffer);
 
-```c
-char *buf = NULL;
-size_t bufsize = 0;
-
-struct zip_t *zip = zip_stream_open(zipstream, zipstreamsize, 0, 'r');
+var z = try zip.openStream(stream, zip.defaultCompressionLevel, 'r');
 {
-    zip_entry_open(zip, "foo-1.txt");
-    {
-        zip_entry_read(zip, (void **)&buf, &bufsize);
-    }
-    zip_entry_close(zip);
-}
-zip_stream_close(zip);
+    defer z.closeStream();
 
-free(buf);
+    try z.openEntry("foo-1.txt");
+    {
+        defer z.closeEntry();
+        buffer = try z.readEntry(allocator);
+    }
+}
 ```
 
 * Extract a partial zip entry

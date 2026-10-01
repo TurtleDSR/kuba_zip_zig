@@ -231,3 +231,24 @@ test "Create a new zip archive in memory (stream API)" {
         try std.testing.expect(read > 0);
     }
 }
+
+test "Extract a zip entry into memory (stream API)" {
+    const stream = @embedFile(".out/foo.zip");
+    
+    var buffer: []u8 = undefined;
+    defer allocator.free(buffer);
+
+    var z = try zip.openStream(stream, zip.defaultCompressionLevel, 'r');
+    {
+        defer z.closeStream();
+
+        try z.openEntry("foo-1.txt");
+        {
+            defer z.closeEntry();
+            buffer = try z.readEntry(allocator);
+        }
+    }
+
+    try std.testing.expect(buffer.len > 0);
+    try std.testing.expect(std.mem.eql(u8, buffer, "Some data here..."));
+}
