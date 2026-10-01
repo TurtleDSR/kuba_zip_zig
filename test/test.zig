@@ -8,7 +8,7 @@ test "error message" {
 }
 
 test "open missing zip error message" {
-    _ = zip.open("test/static/nonexistent.zip", zip.defaultCompressionLevel, 'r') catch |err| {
+    _ = zip.open("test/.in/nonexistent.zip", zip.defaultCompressionLevel, 'r') catch |err| {
         std.debug.print("\n\"open missing zip error message\" - Error: {s}", .{zip.getErrorMessage(err)});
         return;
     };
@@ -17,10 +17,10 @@ test "open missing zip error message" {
 }
 
 test "open and write entry" {
-    var z = try zip.open("test/static/write.zip", zip.defaultCompressionLevel, 'w');
+    var z = try zip.open("test/.out/write.zip", zip.defaultCompressionLevel, 'w');
     defer z.close();
 
-    try z.openEntry("test.txt"); 
+    try z.openEntry("test.txt");
     {
         try z.writeEntry("TEST");
         z.closeEntry();
@@ -28,7 +28,7 @@ test "open and write entry" {
 }
 
 test "open and delete entry" {
-    var z = try zip.open("test/static/write.zip", zip.defaultCompressionLevel, 'a');
+    var z = try zip.open("test/.out/write.zip", zip.defaultCompressionLevel, 'a');
     defer z.close();
 
     try std.testing.expect(try z.getEntryTotal() > 0); //make sure entries exist
@@ -42,7 +42,7 @@ test "open and delete entry" {
 }
 
 test "open and read entry" {
-    var z = try zip.open("test/static/read.zip", zip.defaultCompressionLevel, 'r');
+    var z = try zip.open("test/.in/read.zip", zip.defaultCompressionLevel, 'r');
     defer z.close();
 
     try z.openEntry("test.txt");
@@ -61,7 +61,7 @@ test "open and read entry" {
 }
 
 test "extract entry with callback" {
-    var z = try zip.open("test/static/read.zip", zip.defaultCompressionLevel, 'r');
+    var z = try zip.open("test/.in/read.zip", zip.defaultCompressionLevel, 'r');
     defer z.close();
 
     try z.openEntry("test.txt");
@@ -82,7 +82,7 @@ test "extract entry with callback" {
 
 //Example code blocks from README
 test "Create a new zip archive with default compression level" {
-    var z = try zip.open("test/static/foo.zip", zip.defaultCompressionLevel, 'w');
+    var z = try zip.open("test/.out/foo.zip", zip.defaultCompressionLevel, 'w');
     defer z.close();
 
     try z.openEntry("foo-1.txt");
@@ -97,14 +97,14 @@ test "Create a new zip archive with default compression level" {
     {
         defer z.closeEntry();
 
-        try z.fileWriteEntry("test/static/foo-2.1.txt");
-        try z.fileWriteEntry("test/static/foo-2.2.txt");
-        try z.fileWriteEntry("test/static/foo-2.3.txt");
+        try z.fileWriteEntry("test/.in/foo-2.1.txt");
+        try z.fileWriteEntry("test/.in/foo-2.2.txt");
+        try z.fileWriteEntry("test/.in/foo-2.3.txt");
     }
 }
 
 test "Append to the exisiting archive" {
-    var z = try zip.open("test/static/foo.zip", zip.defaultCompressionLevel, 'a');
+    var z = try zip.open("test/.out/foo.zip", zip.defaultCompressionLevel, 'a');
     defer z.close();
 
     try z.openEntry("foo-3.txt");
@@ -113,5 +113,33 @@ test "Append to the exisiting archive" {
 
         const buf: [:0]const u8 = "Append Some data here...";
         try z.writeEntry(buf);
+    }
+}
+
+test "Extract a zip archive into a folder" {
+    const cb = struct {
+        fn on_extract(filename: []const u8, arg: anytype) anyerror!void {
+            _ = arg; //we dont need this optional arg
+
+            std.debug.print("\n    Extracted: {s}", .{filename});
+        }
+    };
+
+    try zip.extract("test/.out/foo.zip", "test/.out/tmp", cb.on_extract, &.{});
+}
+
+test "Extract a zip entry into memory" {
+    var z = try zip.open("test/.out/foo.zip", zip.defaultCompressionLevel, 'r');
+    defer z.close();
+
+    var buffer: []u8 = undefined;
+    defer std.testing.allocator.free(buffer);
+
+    try z.openEntry("foo-1.txt");
+    {
+        defer z.closeEntry();
+
+        buffer = try z.readEntry(std.testing.allocator);
+        try std.testing.expect(buffer.len > 0);
     }
 }

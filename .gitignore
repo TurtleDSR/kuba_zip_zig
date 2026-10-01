@@ -1,7 +1,3 @@
 .zig-cache/
 zig-out/
 .build/
-
-test/static/*
-
-!test/static/read.zip

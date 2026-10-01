@@ -487,7 +487,7 @@ pub const Zip = struct {
     ///
     /// Output must be freed.
     pub fn readEntry(self: *Zip, allocator: std.mem.Allocator) ZipError![]u8 {
-        const entry_size = self.entrySize();
+        const entry_size = self.getEntrySize();
 
         const buffer: []u8 = allocator.alloc(u8, entry_size) catch return ZipError.OutOfMemory;
         errdefer allocator.free(buffer);

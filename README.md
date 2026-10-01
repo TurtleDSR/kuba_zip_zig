@@ -43,57 +43,46 @@ try z.openEntry("foo-2.txt");
 ```
 
 * Append to the existing zip archive.
+```zig
+var z = try zip.open("foo.zip", zip.defaultCompressionLevel, 'a');
+defer z.close();
 
-```c
-struct zip_t *zip = zip_open("foo.zip", ZIP_DEFAULT_COMPRESSION_LEVEL, 'a');
+try z.openEntry("foo-3.txt");
 {
-    zip_entry_open(zip, "foo-3.txt");
-    {
-        const char *buf = "Append some data here...\0";
-        zip_entry_write(zip, buf, strlen(buf));
-    }
-    zip_entry_close(zip);
+    defer z.closeEntry();
+
+    const buf: [:0]const u8 = "Append Some data here...";
+    try z.writeEntry(buf);
 }
-zip_close(zip);
 ```
 
 * Extract a zip archive into a folder.
+```zig
+const cb = struct {
+    fn on_extract(filename: []const u8, arg: anytype) anyerror!void {
+        _ = arg; //we dont need this optional arg
 
-```c
-int on_extract_entry(const char *filename, void *arg) {
-    static int i = 0;
-    int n = *(int *)arg;
-    printf("Extracted: %s (%d of %d)\n", filename, ++i, n);
+        std.debug.print("Extracted: {s}\n", .{filename});
+    }
+};
 
-    return 0;
-}
-
-// From "foo.zip" on disk
-int arg = 2;
-zip_extract("foo.zip", "/tmp", on_extract_entry, &arg);
-
-// Or from memory
-arg = 2;
-zip_stream_extract(zipstream, zipstreamsize, "/tmp", on_extract_entry, &arg);
+try zip.extract("foo.zip", "/tmp", cb.on_extract, &.{});
 ```
 
 * Extract a zip entry into memory.
+```zig
+var z = try zip.open("foo.zip", zip.defaultCompressionLevel, 'r');
+defer z.close();
 
-```c
-void *buf = NULL;
-size_t bufsize;
+var buffer: []u8 = undefined;
+defer allocator.free(buffer);
 
-struct zip_t *zip = zip_open("foo.zip", 0, 'r');
+try z.openEntry("foo-1.txt");
 {
-    zip_entry_open(zip, "foo-1.txt");
-    {
-        zip_entry_read(zip, &buf, &bufsize);
-    }
-    zip_entry_close(zip);
-}
-zip_close(zip);
+    defer z.closeEntry();
 
-free(buf);
+    buffer = try z.readEntry(allocator);
+}
 ```
 
 * Extract a zip entry into memory (no internal allocation).
