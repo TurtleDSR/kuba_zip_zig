@@ -2,5 +2,6 @@
 zig-out/
 .build/
 
-#copy of module so ignore it
-test/zip/
+test/static/*
+
+!test/static/read.zip

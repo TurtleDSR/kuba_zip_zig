@@ -20,27 +20,26 @@ I (Turtle) have been using kuba zip for ages in my c projects. Since I am now tr
 ### Examples
 
 * Create a new zip archive with default compression level.
+```zig
+var z = try zip.open("foo.zip", zip.defaultCompressionLevel, 'w');
+defer z.close();
 
-```c
-struct zip_t *zip = zip_open("foo.zip", ZIP_DEFAULT_COMPRESSION_LEVEL, 'w');
+try z.openEntry("foo-1.txt");
 {
-    zip_entry_open(zip, "foo-1.txt");
-    {
-        const char *buf = "Some data here...\0";
-        zip_entry_write(zip, buf, strlen(buf));
-    }
-    zip_entry_close(zip);
+    defer z.closeEntry();
 
-    zip_entry_open(zip, "foo-2.txt");
-    {
-        // merge 3 files into one entry and compress them on-the-fly.
-        zip_entry_fwrite(zip, "foo-2.1.txt");
-        zip_entry_fwrite(zip, "foo-2.2.txt");
-        zip_entry_fwrite(zip, "foo-2.3.txt");
-    }
-    zip_entry_close(zip);
+    const buf: [:0]const u8 = "Some data here...";
+    try z.writeEntry(buf);
 }
-zip_close(zip);
+
+try z.openEntry("foo-2.txt");
+{
+    defer z.closeEntry();
+
+    try z.fileWriteEntry("foo-2.1.txt");
+    try z.fileWriteEntry("foo-2.2.txt");
+    try z.fileWriteEntry("foo-2.3.txt");
+}
 ```
 
 * Append to the existing zip archive.
@@ -401,5 +400,5 @@ To ensure the produced ZIP archive is _NOT ZIP64_, use the alternate mode value 
 The implementation accepts an alternate value in the switch labels (so the same behavior is selected), but only the literal `'w'` triggers the automatic ZIP64 flag.
 
 Convention:
-- Use `'w' - 64` (integer value 55) when calling `zip_open`, `zip_stream_open`, etc., to select write mode without enabling ZIP64.
+- Use `'w' - 64` (integer value 55) when calling `open`, `openStream`, etc., to select write mode without enabling ZIP64.
 - The same pattern applies to other modes: use `'r' - 64`, `'a' - 64`, `'d' - 64` to pick the non-ZIP64 variants.

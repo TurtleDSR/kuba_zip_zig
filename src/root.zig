@@ -64,6 +64,179 @@ pub fn getErrorMessage(err: ZipError) [:0]const u8 {
     return convertCString(c.zip_strerror(code));
 }
 
+/// Extracts a zip archive stream into directory.
+///
+/// If on_extract is not NULL, the callback will be called after
+/// successfully extracted each zip entry.
+/// Returning an error from the callback will cause abort and return an
+/// error.
+///
+/// **Parameters:**
+///
+/// *stream* - zip archive stream.
+///
+/// *dir* - output directory.
+///
+/// *on_extract* - on extract callback.
+///
+/// *arg* - anonymous struct which you can pass to the on_extract callback.
+pub fn extractStream(stream: []const u8, dir: [:0]const u8, comptime on_extract: *const fn (filename: []const u8, arg: anytype) anyerror!void, arg: anytype) ZipError!void {
+    const t = @TypeOf(arg);
+
+    const Context = struct {
+        user_arg: t,
+        captured_err: ?anyerror = null,
+
+        fn callback(cbfilename: [*c]const u8, cbarg: ?*anyopaque) callconv(.c) c_int {
+            const ctx: *@This() = @ptrCast(@alignCast(cbarg orelse return 0));
+            on_extract(convertCString(cbfilename), ctx.user_arg) catch |err| {
+                ctx.captured_err = err;
+                return 0;
+            };
+            return 1;
+        }
+    };
+
+    var ctx = Context{
+        .user_arg = arg,
+    };
+
+    const err = c.zip_stream_extract(stream.ptr, stream.len, dir.ptr, Context.callback, &ctx);
+
+    if (ctx.captured_err != null) {
+        return ZipError.UnknownError;
+    }
+
+    if (err < 0) {
+        std.debug.print("Error code: {d}", .{err});
+        return getErrorFromCode(@intCast(err));
+    }
+}
+
+/// Extracts a zip archive file into directory.
+///
+/// If on_extract is not NULL, the callback will be called after
+/// successfully extracted each zip entry.
+/// Returning an error from the callback will cause abort and return an
+/// error.
+///
+/// **Parameters:**
+///
+/// *path* - zip archive file.
+///
+/// *dir* - output directory.
+///
+/// *on_extract* - on extract callback.
+///
+/// *arg* - anonymous struct which you can pass to the on_extract callback.
+pub fn extract(path: [:0]const u8, dir: [:0]const u8, comptime on_extract: *const fn (filename: []const u8, arg: anytype) anyerror!void, arg: anytype) ZipError!void {
+    const t = @TypeOf(arg);
+
+    const Context = struct {
+        user_arg: t,
+        captured_err: ?anyerror = null,
+
+        fn callback(cbfilename: [*c]const u8, cbarg: ?*anyopaque) callconv(.c) c_int {
+            const ctx: *@This() = @ptrCast(@alignCast(cbarg orelse return 0));
+            on_extract(convertCString(cbfilename), ctx.user_arg) catch |err| {
+                ctx.captured_err = err;
+                return 0;
+            };
+            return 1;
+        }
+    };
+
+    var ctx = Context{
+        .user_arg = arg,
+    };
+
+    const err = c.zip_extract(path.ptr, dir.ptr, Context.callback, &ctx);
+
+    if (ctx.captured_err != null) {
+        return ZipError.UnknownError;
+    }
+
+    if (err < 0) {
+        std.debug.print("Error code: {d}", .{err});
+        return getErrorFromCode(@intCast(err));
+    }
+}
+
+/// Creates a new archive and puts files into a single zip archive.
+///
+/// **Parameters:**
+///
+/// *path* - zip archive file.
+///
+/// *files* - input files.
+pub fn create(path: [:0]const u8, files: [][:0]const u8) ZipError!void {
+    var z = try Zip.open(path, defaultCompressionLevel, 'w');
+    defer z.close();
+
+    for (files) |value| {
+        try z.writeEntry(value.ptr);
+    }
+}
+
+/// Opens zip archive with compression level using the given mode.
+///
+/// **Parameters:**
+///
+/// *path* - zip archive file name.
+///
+/// *level* - compression level (0-9 are the standard zlib-style levels).
+///
+/// *mode* - file access mode.
+/// - 'r': opens a file for reading/extracting (the file must exists).
+/// - 'w': creates an empty file for writing.
+/// - 'a': appends to an existing archive.
+///
+/// **Returns:**
+///
+/// the zip archive handler
+pub fn open(path: [:0]const u8, level: i32, mode: u8) ZipError!Zip {
+    var err: c_int = 0;
+    const handle = c.zip_openwitherror(path.ptr, @intCast(level), mode, &err) orelse {
+        return getErrorFromCode(@intCast(err));
+    };
+
+    const out: Zip = Zip{
+        .handle = handle,
+    };
+    return out;
+}
+
+/// Opens zip archive with a password for encryption/decryption using
+///
+/// **Parameters:**
+///
+/// *path* - zip archive file name.
+///
+/// *level* - compression level (0-9 are the standard zlib-style levels).
+///
+/// *mode* - file access mode.
+/// - 'r': opens a file for reading/extracting (the file must exists).
+/// - 'w': creates an empty file for writing.
+/// - 'a': appends to an existing archive.
+///
+/// *password* - the password fosr encryption (write) or decryption (read). Pass NULL for no encryption.
+///
+/// **Returns:**
+///
+/// the zip archive handler
+pub fn openWithPassword(path: [:0]const u8, level: i32, mode: u8, password: ?[:0]const u8) ZipError!Zip {
+    var err: c_int = 0;
+    const pass_ptr = if (password) |slice| slice.ptr else null;
+    const handle = c.zip_open_with_password_and_error(path.ptr, @intCast(level), mode, pass_ptr, &err) orelse {
+        return getErrorFromCode(@intCast(err));
+    };
+
+    const out: Zip = Zip{
+        .handle = handle,
+    };
+    return out;
+}
+
 /// **Represents a zip archive**
 ///
 /// Created with Zip.open()
@@ -71,65 +244,6 @@ pub fn getErrorMessage(err: ZipError) [:0]const u8 {
 /// When finished, use Zip.close()
 pub const Zip = struct {
     handle: *c.struct_zip_t,
-
-    /// Opens zip archive with compression level using the given mode.
-    ///
-    /// **Parameters:**
-    ///
-    /// *zipname* - zip archive file name.
-    ///
-    /// *level* - compression level (0-9 are the standard zlib-style levels).
-    ///
-    /// *mode* - file access mode.
-    /// - 'r': opens a file for reading/extracting (the file must exists).
-    /// - 'w': creates an empty file for writing.
-    /// - 'a': appends to an existing archive.
-    ///
-    /// **Returns:**
-    ///
-    /// the zip archive handler
-    pub fn open(path: [:0]const u8, level: i32, mode: u8) ZipError!Zip {
-        var err: c_int = 0;
-        const handle = c.zip_openwitherror(path.ptr, @intCast(level), mode, &err) orelse {
-            return getErrorFromCode(@intCast(err));
-        };
-
-        const out: Zip = Zip{
-            .handle = handle,
-        };
-        return out;
-    }
-
-    /// Opens zip archive with a password for encryption/decryption using
-    ///
-    /// **Parameters:**
-    ///
-    /// *zipname* - zip archive file name.
-    ///
-    /// *level* - compression level (0-9 are the standard zlib-style levels).
-    ///
-    /// *mode* - file access mode.
-    /// - 'r': opens a file for reading/extracting (the file must exists).
-    /// - 'w': creates an empty file for writing.
-    /// - 'a': appends to an existing archive.
-    ///
-    /// *password* - the password fosr encryption (write) or decryption (read). Pass NULL for no encryption.
-    ///
-    /// **Returns:**
-    ///
-    /// the zip archive handler
-    pub fn openWithPassword(path: [:0]const u8, level: i32, mode: u8, password: ?[:0]const u8) ZipError!Zip {
-        var err: c_int = 0;
-        const pass_ptr = if (password) |slice| slice.ptr else null;
-        const handle = c.zip_open_with_password_and_error(path.ptr, @intCast(level), mode, pass_ptr, &err) orelse {
-            return getErrorFromCode(@intCast(err));
-        };
-
-        const out: Zip = Zip{
-            .handle = handle,
-        };
-        return out;
-    }
 
     /// Closes the zip archive, releases resources - always finalize.
     pub fn close(self: *Zip) void {
@@ -214,11 +328,8 @@ pub const Zip = struct {
     }
 
     /// Closes a zip entry, flushes buffer and releases resources.
-    pub fn closeEntry(self: *Zip) ZipError!void {
-        const err = c.zip_entry_close(self.handle);
-        if (err < 0) {
-            return getErrorFromCode(@intCast(err));
-        }
+    pub fn closeEntry(self: *Zip) void {
+        _ = c.zip_entry_close(self.handle);
     }
 
     /// Returns a local name of the current zip entry.
@@ -459,10 +570,10 @@ pub const Zip = struct {
     ///
     /// **Parameters:**
     ///
-    /// *arg* - anonymous struct which you can pass to the on_extract callback.
-    ///
     /// *on_extract* - comptime callback function.
-    pub fn extractEntry(self: *Zip, arg: anytype, comptime on_extract: *const fn (arg: anytype, entryoffset: u64, data: []const u8) anyerror!usize) ZipError!void {
+    ///
+    /// *arg* - anonymous struct which you can pass to the on_extract callback.
+    pub fn extractEntry(self: *Zip, comptime on_extract: *const fn (entryoffset: u64, data: []const u8, arg: anytype) anyerror!usize, arg: anytype) ZipError!void {
         const t = @TypeOf(arg);
 
         const Context = struct {
@@ -477,7 +588,7 @@ pub const Zip = struct {
                 const data_bytes: [*]const u8 = @ptrCast(cbdata.?);
                 const chunk = data_bytes[0..cbsize];
 
-                const written = on_extract(ctx.user_arg, cboffset, chunk) catch |err| {
+                const written = on_extract(cboffset, chunk, ctx.user_arg) catch |err| {
                     ctx.captured_err = err;
                     return 0;
                 };
@@ -510,7 +621,7 @@ pub const Zip = struct {
     /// the number of entries.
     pub fn getEntryTotal(self: *Zip) ZipError!usize {
         const err = c.zip_entries_total(self.handle);
-        if(err < 0) {
+        if (err < 0) {
             return getErrorFromCode(@intCast(err));
         }
 
@@ -518,34 +629,34 @@ pub const Zip = struct {
     }
 
     /// Deletes zip archive entries.
-    /// 
+    ///
     /// **Parameters:**
-    /// 
+    ///
     /// *entries* - slice of zip archive entries to be deleted.
-    /// 
+    ///
     /// **Returns:**
     ///
     /// the number of deleted entries.
-    pub fn deleteEntries(self: *Zip, entries: []const[:0]const u8) ZipError!usize {
-        //uses a buffer chunk of 128 strings to find a balance between overhead and 
+    pub fn deleteEntries(self: *Zip, entries: []const [:0]const u8) ZipError!usize {
+        //uses a buffer chunk of 128 strings to find a balance between overhead and
         //time complexity while still avoiding heap allocations.
 
         const chunk_size = comptime 128;
         var entrybuffer: [chunk_size][*c]u8 = undefined;
-        
+
         var deleted: usize = 0;
         var i: usize = 0;
 
-        while(i < entries.len) {
+        while (i < entries.len) {
             const batch_size = @min(entries.len - i, chunk_size);
-            const batch = entries[i..i + batch_size];
+            const batch = entries[i .. i + batch_size];
 
-            for(batch, 0..) |entry, j| {
+            for (batch, 0..) |entry, j| {
                 entrybuffer[j] = @constCast(entry.ptr);
             }
 
             const err = c.zip_entries_delete(self.handle, &entrybuffer[0], batch_size);
-            if(err < 0) {
+            if (err < 0) {
                 return getErrorFromCode(@intCast(err));
             }
 
@@ -557,25 +668,108 @@ pub const Zip = struct {
     }
 
     /// Deletes zip archive entries.
-    /// 
+    ///
     /// **Parameters:**
-    /// 
+    ///
     /// *entries* - slice of zip archive entry indices to be deleted.
-    /// 
+    ///
     /// **Returns:**
     ///
     /// the number of deleted entries.
     pub fn deleteEntriesByIndex(self: *Zip, entries: []const usize) ZipError!usize {
         const err = c.zip_entries_deletebyindex(self.handle, entries.ptr, entries.len);
-        if(err < 0) {
+        if (err < 0) {
             return getErrorFromCode(@intCast(err));
         }
 
         return @intCast(err);
     }
+
+    /// Opens zip archive stream into memory.
+    ///
+    /// **Parameters:**
+    ///
+    /// *stream* - zip archive file name.
+    ///
+    /// *level* - compression level (0-9 are the standard zlib-style levels).
+    ///
+    /// *mode* - file access mode.
+    /// - 'r': opens a file for reading/extracting (the file must exists).
+    /// - 'w': creates an empty file for writing.
+    /// - 'a': appends to an existing archive.
+    ///
+    /// **Returns:**
+    ///
+    /// the zip archive handler
+    pub fn openStream(stream: []const u8, level: i32, mode: u8) ZipError!Zip {
+        var err: c_int = 0;
+        const handle = c.zip_stream_openwitherror(stream.ptr, stream.len, @intCast(level), mode, &err) orelse {
+            return getErrorFromCode(@intCast(err));
+        };
+
+        const out: Zip = Zip{
+            .handle = handle,
+        };
+        return out;
+    }
+
+    /// Opens zip archive stream into memory.
+    ///
+    /// **Parameters:**
+    ///
+    /// *stream* - zip archive file name.
+    ///
+    /// *level* - compression level (0-9 are the standard zlib-style levels).
+    ///
+    /// *mode* - file access mode.
+    /// - 'r': opens a file for reading/extracting (the file must exists).
+    /// - 'w': creates an empty file for writing.
+    /// - 'a': appends to an existing archive.
+    ///
+    /// *password* - the password fosr encryption (write) or decryption (read). Pass NULL for no encryption.
+    ///
+    /// **Returns:**
+    ///
+    /// the zip archive handler
+    pub fn openStreamWithPassword(stream: []const u8, level: i32, mode: u8, password: ?[:0]const u8) ZipError!Zip {
+        const pass_ptr = if (password) |slice| slice.ptr else null;
+        const handle = c.zip_stream_open_with_password(stream.ptr, stream.len, @intCast(level), mode, pass_ptr) orelse {
+            return ZipError.UnknownError;
+        };
+
+        const out: Zip = Zip{
+            .handle = handle,
+        };
+        return out;
+    }
+
+    /// Copy zip archive stream output buffer.
+    ///
+    /// **Parameters:**
+    ///
+    /// *buffer* - output buffer.
+    ///
+    /// **Returns:**
+    ///
+    /// copy size.
+    pub fn copyStreamBuffer(self: *Zip, buffer: *[]const u8) isize {
+        return c.zip_stream_copy(self.handle, buffer.ptr, buffer.len);
+    }
+
+    /// Closes the zip archive, releases resources.
+    pub fn closeStream(self: *Zip) void {
+        c.zip_stream_close(self.handle);
+    }
 };
 
-//helper
+//                                //
+//                                //
+//                                //
+//        HELPER FUNCTIONS        //
+//                                //
+//                                //
+//                                //
+
 fn getErrorFromCode(code: i32) ZipError {
     return switch (code) {
         c.ZIP_ENOINIT => ZipError.NotInitialized,
