@@ -1,4 +1,6 @@
 const std = @import("std");
+const allocator = std.testing.allocator;
+
 const zip = @import("zip");
 
 test "error message" {
@@ -45,19 +47,22 @@ test "open and read entry" {
     var z = try zip.open("test/.in/read.zip", zip.defaultCompressionLevel, 'r');
     defer z.close();
 
+    var buffer: []u8 = undefined;
+    defer allocator.free(buffer);
+
     try z.openEntry("test.txt");
-    defer z.closeEntry();
+    {
+        defer z.closeEntry();
 
-    const len = z.getEntrySize();
+        const len = z.getEntrySize();
 
-    var buf = try std.testing.allocator.alloc(u8, len);
-    defer std.testing.allocator.free(buf);
+        buffer = try allocator.alloc(u8, len);
 
-    const data_len = try z.bufferReadEntry(&buf);
+        const data_len = try z.bufferReadEntry(&buffer);
 
-    std.debug.print("\n\"open and read entry\" - Data: {s}", .{buf[0..data_len]});
-
-    try std.testing.expect(std.mem.eql(u8, buf[0..data_len], "TEST"));
+        std.debug.print("\n\"open and read entry\" - Data: {s}", .{buffer[0..data_len]});
+        try std.testing.expect(std.mem.eql(u8, buffer[0..data_len], "TEST"));
+    }
 }
 
 test "extract entry with callback" {
@@ -68,12 +73,11 @@ test "extract entry with callback" {
     defer z.closeEntry();
 
     const cb = struct {
-        fn callback(offset: u64, data: []const u8, arg: anytype) anyerror!usize {
+        fn callback(offset: u64, data: []const u8, arg: anytype) anyerror!void {
             try std.testing.expect(std.mem.eql(u8, arg.str, "test string"));
             try std.testing.expect(arg.int == 15);
 
             std.debug.print("\n\"extract entry with callback\" - Data: {s}", .{data[offset..data.len]});
-            return data.len;
         }
     };
 
@@ -133,7 +137,7 @@ test "Extract a zip entry into memory" {
     defer z.close();
 
     var buffer: []u8 = undefined;
-    defer std.testing.allocator.free(buffer);
+    defer allocator.free(buffer);
 
     try z.openEntry("foo-1.txt");
     {
@@ -141,5 +145,89 @@ test "Extract a zip entry into memory" {
 
         buffer = try z.readEntry(std.testing.allocator);
         try std.testing.expect(buffer.len > 0);
+    }
+}
+
+test "Extract a zip entry into memory (no internal allocation)" {
+    var z = try zip.open("test/.out/foo.zip", zip.defaultCompressionLevel, 'r');
+    defer z.close();
+
+    var buffer: []u8 = undefined;
+    defer allocator.free(buffer);
+
+    try z.openEntry("foo-1.txt");
+    {
+        defer z.closeEntry();
+
+        buffer = try allocator.alloc(u8, z.getEntrySize());
+        const read = try z.bufferReadEntry(&buffer);
+        try std.testing.expect(read > 0);
+    }
+}
+
+test "Extract a zip entry into memory using callback" {
+    const Callback = struct {
+        buffer: []u8,
+        allocator: std.mem.Allocator,
+
+        fn on_extract(offset: u64, data: []const u8, arg: anytype) anyerror!void {
+            _ = offset; //unused
+            var self: *@This() = @ptrCast(@alignCast(arg));
+
+            self.allocator.free(self.buffer); //free buffer if defined
+            self.buffer = try self.allocator.dupe(u8, data);
+        }
+    };
+
+    var cb: Callback = .{
+        .allocator = allocator,
+        .buffer = &.{},
+    };
+    defer allocator.free(cb.buffer);
+
+    var z = try zip.open("test/.out/foo.zip", zip.defaultCompressionLevel, 'r');
+    {
+        defer z.close();
+
+        try z.openEntry("foo-1.txt"); 
+        {
+            defer z.closeEntry();
+
+            try z.extractEntry(Callback.on_extract, &cb);
+        }
+    }
+}
+
+test "Extract a zip entry into a file" {
+    var z = try zip.open("test/.out/foo.zip", zip.defaultCompressionLevel, 'r');
+    {
+        defer z.close();
+
+        try z.openEntry("foo-2.txt");
+        {
+            defer z.closeEntry();
+            try z.fileReadEntry("test/.out/foo-2.txt");
+        }
+    }
+}
+
+test "Create a new zip archive in memory (stream API)" {
+    var outbuffer: []?*u8 = &.{};
+    defer allocator.free(outbuffer);
+
+    const inbuffer: []const u8 = "Append some data here...";
+
+    var z = try zip.openStream(null, zip.defaultCompressionLevel, 'w');
+    {
+        defer z.closeStream();
+
+        try z.openEntry("foo-1.txt");
+        {
+            defer z.closeEntry();
+            try z.writeEntry(inbuffer);
+        }
+
+        const read = try z.copyStreamBuffer(&outbuffer, allocator); //allocates buffer since it is empty
+        try std.testing.expect(read > 0);
     }
 }

@@ -86,76 +86,92 @@ try z.openEntry("foo-1.txt");
 ```
 
 * Extract a zip entry into memory (no internal allocation).
+```zig
+var z = try zip.open("foo.zip", zip.defaultCompressionLevel, 'r');
+defer z.close();
 
-```c
-unsigned char *buf;
-size_t bufsize;
+var buffer: []u8 = undefined;
+defer allocator.free(buffer);
 
-struct zip_t *zip = zip_open("foo.zip", 0, 'r');
+try z.openEntry("foo-1.txt");
 {
-    zip_entry_open(zip, "foo-1.txt");
-    {
-        bufsize = zip_entry_size(zip);
-        buf = calloc(sizeof(unsigned char), bufsize);
+    defer z.closeEntry();
 
-        zip_entry_noallocread(zip, (void *)buf, bufsize);
-    }
-    zip_entry_close(zip);
+    buffer = try allocator.alloc(u8, z.getEntrySize());
+    const read = try z.bufferReadEntry(&buffer);
+    try std.testing.expect(read > 0);
 }
-zip_close(zip);
-
-free(buf);
 ```
 
 * Extract a zip entry into memory using callback.
+```zig
+const Callback = struct {
+    buffer: []u8,
+    allocator: std.mem.Allocator,
 
-```c
-struct buffer_t {
-    char *data;
-    size_t size;
+    fn on_extract(offset: u64, data: []const u8, arg: anytype) anyerror!void {
+        _ = offset; //unused
+        var self: *@This() = @ptrCast(@alignCast(arg));
+
+        self.allocator.free(self.buffer); //free buffer if defined
+        self.buffer = try self.allocator.dupe(u8, data);
+    }
 };
 
-static size_t on_extract(void *arg, unsigned long long offset, const void *data, size_t size) {
-    struct buffer_t *buf = (struct buffer_t *)arg;
-    buf->data = realloc(buf->data, buf->size + size + 1);
-    assert(NULL != buf->data);
+var cb: Callback = .{
+    .allocator = allocator,
+    .buffer = &.{},
+};
+defer allocator.free(cb.buffer);
 
-    memcpy(&(buf->data[buf->size]), data, size);
-    buf->size += size;
-    buf->data[buf->size] = 0;
-
-    return size;
-}
-
-struct buffer_t buf = {0};
-struct zip_t *zip = zip_open("foo.zip", 0, 'r');
+var z = try zip.open("foo.zip", zip.defaultCompressionLevel, 'r');
 {
-    zip_entry_open(zip, "foo-1.txt");
-    {
-        zip_entry_extract(zip, on_extract, &buf);
-    }
-    zip_entry_close(zip);
-}
-zip_close(zip);
+    defer z.close();
 
-free(buf.data);
+    try z.openEntry("foo-1.txt"); 
+    {
+        defer z.closeEntry();
+
+        try z.extractEntry(Callback.on_extract, &cb);
+    }
+}
 ```
 
 * Extract a zip entry into a file.
-
-```c
-struct zip_t *zip = zip_open("foo.zip", 0, 'r');
+```zig
+var z = try zip.open("foo.zip", zip.defaultCompressionLevel, 'r');
 {
-    zip_entry_open(zip, "foo-2.txt");
+    defer z.close();
+
+    try z.openEntry("foo-2.txt");
     {
-        zip_entry_fread(zip, "foo-2.txt");
+        defer z.closeEntry();
+        try z.fileReadEntry("foo-2.txt");
     }
-    zip_entry_close(zip);
 }
-zip_close(zip);
 ```
 
 * Create a new zip archive in memory (stream API).
+```zig
+var outbuffer: []?*u8 = &.{};
+defer allocator.free(outbuffer);
+
+const inbuffer: []const u8 = "Append some data here...";
+
+var z = try zip.openStream(null, zip.defaultCompressionLevel, 'w');
+{
+    defer z.closeStream();
+
+    try z.openEntry("foo-1.txt");
+    {
+        defer z.closeEntry();
+        try z.writeEntry(inbuffer);
+    }
+
+    const read = try z.copyStreamBuffer(&outbuffer, allocator); //allocates buffer since it is empty
+    try std.testing.expect(read > 0);
+}
+```
 
 ```c
 char *outbuf = NULL;

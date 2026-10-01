@@ -2,6 +2,7 @@
 
 const std = @import("std");
 const c = @import("zip_c.zig");
+const libc = @import("stdlib.h");
 
 /// Default zip compression level.
 pub const defaultCompressionLevel: i32 = 6;
@@ -62,6 +63,65 @@ pub fn getErrorMessage(err: ZipError) [:0]const u8 {
     }
     const code: c_int = @intCast(getCodeFromError(err));
     return convertCString(c.zip_strerror(code));
+}
+
+/// Opens zip archive stream into memory.
+///
+/// **Parameters:**
+///
+/// *stream* - zip archive file name.
+///
+/// *level* - compression level (0-9 are the standard zlib-style levels).
+///
+/// *mode* - file access mode.
+/// - 'r': opens a file for reading/extracting (the file must exists).
+/// - 'w': creates an empty file for writing.
+/// - 'a': appends to an existing archive.
+///
+/// **Returns:**
+///
+/// the zip archive handler
+pub fn openStream(stream: ?[]const u8, level: i32, mode: u8) ZipError!Zip {
+    var err: c_int = 0;
+    const streamptr = if (stream) |ptr| ptr.ptr else null;
+    const handle = c.zip_stream_openwitherror(streamptr, if (stream) |s| s.len else 0, @intCast(level), mode, &err) orelse {
+        return getErrorFromCode(@intCast(err));
+    };
+
+    const out: Zip = Zip{
+        .handle = handle,
+    };
+    return out;
+}
+
+/// Opens zip archive stream into memory.
+///
+/// **Parameters:**
+///
+/// *stream* - zip archive file name.
+///
+/// *level* - compression level (0-9 are the standard zlib-style levels).
+///
+/// *mode* - file access mode.
+/// - 'r': opens a file for reading/extracting (the file must exists).
+/// - 'w': creates an empty file for writing.
+/// - 'a': appends to an existing archive.
+///
+/// *password* - the password fosr encryption (write) or decryption (read). Pass NULL for no encryption.
+///
+/// **Returns:**
+///
+/// the zip archive handler
+pub fn openStreamWithPassword(stream: []const u8, level: i32, mode: u8, password: ?[:0]const u8) ZipError!Zip {
+    const pass_ptr = if (password) |slice| slice.ptr else null;
+    const handle = c.zip_stream_open_with_password(stream.ptr, stream.len, @intCast(level), mode, pass_ptr) orelse {
+        return ZipError.UnknownError;
+    };
+
+    const out: Zip = Zip{
+        .handle = handle,
+    };
+    return out;
 }
 
 /// Extracts a zip archive stream into directory.
@@ -573,7 +633,7 @@ pub const Zip = struct {
     /// *on_extract* - comptime callback function.
     ///
     /// *arg* - anonymous struct which you can pass to the on_extract callback.
-    pub fn extractEntry(self: *Zip, comptime on_extract: *const fn (entryoffset: u64, data: []const u8, arg: anytype) anyerror!usize, arg: anytype) ZipError!void {
+    pub fn extractEntry(self: *Zip, comptime on_extract: *const fn (entryoffset: u64, data: []const u8, arg: anytype) anyerror!void, arg: anytype) ZipError!void {
         const t = @TypeOf(arg);
 
         const Context = struct {
@@ -588,12 +648,12 @@ pub const Zip = struct {
                 const data_bytes: [*]const u8 = @ptrCast(cbdata.?);
                 const chunk = data_bytes[0..cbsize];
 
-                const written = on_extract(cboffset, chunk, ctx.user_arg) catch |err| {
+                on_extract(cboffset, chunk, ctx.user_arg) catch |err| {
                     ctx.captured_err = err;
                     return 0;
                 };
 
-                return written;
+                return cbsize;
             }
         };
 
@@ -685,75 +745,44 @@ pub const Zip = struct {
         return @intCast(err);
     }
 
-    /// Opens zip archive stream into memory.
-    ///
-    /// **Parameters:**
-    ///
-    /// *stream* - zip archive file name.
-    ///
-    /// *level* - compression level (0-9 are the standard zlib-style levels).
-    ///
-    /// *mode* - file access mode.
-    /// - 'r': opens a file for reading/extracting (the file must exists).
-    /// - 'w': creates an empty file for writing.
-    /// - 'a': appends to an existing archive.
-    ///
-    /// **Returns:**
-    ///
-    /// the zip archive handler
-    pub fn openStream(stream: []const u8, level: i32, mode: u8) ZipError!Zip {
-        var err: c_int = 0;
-        const handle = c.zip_stream_openwitherror(stream.ptr, stream.len, @intCast(level), mode, &err) orelse {
-            return getErrorFromCode(@intCast(err));
-        };
-
-        const out: Zip = Zip{
-            .handle = handle,
-        };
-        return out;
-    }
-
-    /// Opens zip archive stream into memory.
-    ///
-    /// **Parameters:**
-    ///
-    /// *stream* - zip archive file name.
-    ///
-    /// *level* - compression level (0-9 are the standard zlib-style levels).
-    ///
-    /// *mode* - file access mode.
-    /// - 'r': opens a file for reading/extracting (the file must exists).
-    /// - 'w': creates an empty file for writing.
-    /// - 'a': appends to an existing archive.
-    ///
-    /// *password* - the password fosr encryption (write) or decryption (read). Pass NULL for no encryption.
-    ///
-    /// **Returns:**
-    ///
-    /// the zip archive handler
-    pub fn openStreamWithPassword(stream: []const u8, level: i32, mode: u8, password: ?[:0]const u8) ZipError!Zip {
-        const pass_ptr = if (password) |slice| slice.ptr else null;
-        const handle = c.zip_stream_open_with_password(stream.ptr, stream.len, @intCast(level), mode, pass_ptr) orelse {
-            return ZipError.UnknownError;
-        };
-
-        const out: Zip = Zip{
-            .handle = handle,
-        };
-        return out;
-    }
-
     /// Copy zip archive stream output buffer.
     ///
     /// **Parameters:**
     ///
     /// *buffer* - output buffer.
+    /// 
+    /// *allocator* - allocator.
     ///
     /// **Returns:**
     ///
     /// copy size.
-    pub fn copyStreamBuffer(self: *Zip, buffer: *[]const u8) isize {
-        return c.zip_stream_copy(self.handle, buffer.ptr, buffer.len);
+    ///
+    /// **Note:**
+    ///
+    /// Allocates buffer if it is passed as empty.
+    pub fn copyStreamBuffer(self: *Zip, buffer: *[]?*u8, allocator: std.mem.Allocator) ZipError!usize {
+        var buf_ptr: ?*anyopaque = if (buffer.len > 0) @ptrCast(buffer.ptr) else null;
+        var buf_len = buffer.len;
+
+        const err = c.zip_stream_copy(self.handle, &buf_ptr, &buf_len);
+        if(err < 0) {
+            return getErrorFromCode(@intCast(err));
+        }
+
+        defer if(buf_ptr) |p| free(p);
+
+        if (buf_ptr) |p| {
+            const typed_ptr: [*]?*u8 = @alignCast(@ptrCast(p));
+
+            const new_slice = try allocator.alloc(?*u8, buf_len);
+            @memcpy(new_slice, typed_ptr[0..buf_len]);
+
+            buffer.* = new_slice;
+        } else {
+            buffer.* = try allocator.alloc(?*u8, 0);
+        }
+
+        return @intCast(err);
     }
 
     /// Closes the zip archive, releases resources.
@@ -858,3 +887,5 @@ fn convertCString(str: [*c]const u8) [:0]const u8 {
     const slice: [:0]const u8 = std.mem.span(str);
     return slice;
 }
+
+extern fn free(ptr: ?*anyopaque) void; //libc free for avoiding 
