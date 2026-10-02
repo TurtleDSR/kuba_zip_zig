@@ -3,4 +3,8 @@
     .version = "1.0.3",
     .minimum_zig_version = "0.16.0",
     .fingerprint = 0x421d9546e580bad7,
+
+    .paths = .{
+        ".",
+    }
 }
