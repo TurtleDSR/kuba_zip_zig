@@ -6,7 +6,7 @@ build: translate
   cp -r src/* .build/lib/
   cp zig-out/lib/zip_c.lib .build/
   cp build.zig.zon .build/lib/
-  ./zip.exe .build/lib/ .build/zip.zip
+  tar -czvf .build/zip.tar.gz -C .build/lib/ .
 
 test: build
   zig build test --summary all

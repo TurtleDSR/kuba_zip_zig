@@ -326,6 +326,6 @@ You can also use the release versions on the [releases](https://github.com/Turtl
 
 To add it directly to your zig project you can run:
 ```bash
-zig fetch --save https://github.com/TurtleDSR/kuba_zip_zig/releases/latest/download/zip.zip
+zig fetch --save https://github.com/TurtleDSR/kuba_zip_zig/releases/latest/download/zip.tar.gz
 ```
 Don't forget to add it as a dependency in your build.zig
