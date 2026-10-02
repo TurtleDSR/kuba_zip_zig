@@ -2,9 +2,11 @@ translate:
   zig build translate build-c
 
 build: translate
-  @[ -d .build/lib/zip/ ] || mkdir -p .build/lib/zip/
-  cp -r src/* .build/lib/zip/
-  cp zig-out/lib/zip_c.lib .build/lib/
+  @[ -d .build/lib/ ] || mkdir -p .build/lib/
+  cp -r src/* .build/lib/
+  cp zig-out/lib/zip_c.lib .build/
+  cp build.zig.zon .build/lib/
+  ./zip.exe .build/lib/ .build/zip.zip
 
 test: build
   zig build test --summary all

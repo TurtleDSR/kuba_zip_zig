@@ -319,11 +319,13 @@ Optionally, you can run the tests as well:
 ```bash
 just test
 ```
-The module will be output into .build/
+The module will be output into .build/lib/
+A zipped version will be output into .build/zip.zip
+
 You can also use the release versions on the [releases](https://github.com/TurtleDSR/kuba_zip_zig/releases) page.
 
 To add it directly to your zig project you can run:
 ```bash
-zig fetch --save git+https://github.com/TurtleDSR/kuba_zip_zig
+zig fetch --save https://github.com/TurtleDSR/kuba_zip_zig/releases/latest/download/zip.zip
 ```
 Don't forget to add it as a dependency in your build.zig
