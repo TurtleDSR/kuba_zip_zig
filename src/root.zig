@@ -404,7 +404,7 @@ pub const Zip = struct {
     /// **Returns:**
     ///
     /// the current zip entry name.
-    pub fn entryName(self: *Zip) ZipError![:0]const u8 {
+    pub fn getEntryName(self: *Zip) ZipError![:0]const u8 {
         const err = c.zip_entry_name(self.handle);
         if (err == null) {
             return ZipError.UnknownError;
@@ -605,7 +605,7 @@ pub const Zip = struct {
     ///
     /// each call will iterate from the start of the entry
     pub fn offsetBufferReadEntry(self: *Zip, read_offset: usize, buffer: *[]u8) ZipError!usize {
-        const err = c.zip_entry_noallocreadwithoffset(self.handle, @intCast(read_offset), buffer.ptr, buffer.len);
+        const err = c.zip_entry_noallocreadwithoffset(self.handle, @intCast(read_offset), buffer.len, buffer.ptr);
         if (err < 0) {
             return getErrorFromCode(@intCast(err));
         }

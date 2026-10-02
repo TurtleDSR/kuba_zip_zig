@@ -143,9 +143,10 @@ test "Extract a zip entry into memory" {
     {
         defer z.closeEntry();
 
-        buffer = try z.readEntry(std.testing.allocator);
+        buffer = try z.readEntry(allocator);
         try std.testing.expect(buffer.len > 0);
     }
+    try std.testing.expect(std.mem.eql(u8, buffer, "Some data here..."));
 }
 
 test "Extract a zip entry into memory (no internal allocation)" {
@@ -163,6 +164,7 @@ test "Extract a zip entry into memory (no internal allocation)" {
         const read = try z.bufferReadEntry(&buffer);
         try std.testing.expect(read > 0);
     }
+    try std.testing.expect(std.mem.eql(u8, buffer, "Some data here..."));
 }
 
 test "Extract a zip entry into memory using callback" {
@@ -196,6 +198,7 @@ test "Extract a zip entry into memory using callback" {
             try z.extractEntry(Callback.on_extract, &cb);
         }
     }
+    try std.testing.expect(std.mem.eql(u8, cb.buffer, "Some data here..."));
 }
 
 test "Extract a zip entry into a file" {
@@ -251,4 +254,124 @@ test "Extract a zip entry into memory (stream API)" {
 
     try std.testing.expect(buffer.len > 0);
     try std.testing.expect(std.mem.eql(u8, buffer, "Some data here..."));
+}
+
+test "Extract a partial zip entry" {
+    var bufarr = std.mem.zeroes([16]u8);
+    var buffer: []u8 = bufarr[0..];
+
+    var z = try zip.open("test/.out/foo.zip", zip.defaultCompressionLevel, 'r');
+    {
+        defer z.close();
+
+        try z.openEntry("foo-1.txt");
+        {
+            defer z.closeEntry();
+
+            const offset: usize = 4;
+            const read = try z.offsetBufferReadEntry(offset, &buffer);
+            try std.testing.expect(read > 0);
+        }
+    }
+    std.debug.print("\n\"Extract a partial zip entry\" - Read Value: {s}", .{buffer});
+}
+
+test "List of all zip entries" {
+    var z = try zip.open("test/.out/foo.zip", zip.defaultCompressionLevel, 'r');
+    {
+        defer z.close();
+
+        const entryCount = try z.getEntryTotal();
+        for(0..entryCount) |i| {
+            try z.openEntryByIndex(i);
+            {
+                defer z.closeEntry();
+
+                const name = try z.getEntryName();
+                const isDir = try z.isEntryDirectory();
+                const isSymLink = try z.isEntrySymlink();
+                const size = z.getEntrySize();
+                const crc32 = z.getEntrycrc32();
+
+                std.debug.print("\n    Entry - {s}: {{isDir: {s}}}, {{isSymlink: {s}}}, {{size: {d}}}, {{crc32: {d}}}", .{
+                    name, 
+                    if(isDir) "true" else "false", 
+                    if(isSymLink) "true" else "false", 
+                    size, 
+                    crc32
+                });
+            }
+        }
+    }
+}
+
+test "Add entries to be deleted" {
+    var z = try zip.open("test/.in/delete.zip", zip.defaultCompressionLevel, 'w');
+    {
+        defer z.close();
+
+        try z.openEntry("unused.txt");
+        {
+            defer z.closeEntry();
+
+            try z.writeEntry("unused");
+        }
+
+        try z.openEntry("remove.ini");
+        {
+            defer z.closeEntry();
+
+            try z.writeEntry("remove");
+        }
+
+        try z.openEntry("delete.me");
+        {
+            defer z.closeEntry();
+
+            try z.writeEntry("delete");
+        }
+    }
+}
+
+test "Delete zip archive entries" {
+    const entries: []const [:0]const u8 = &.{"unused.txt", "remove.ini", "delete.me"};
+    var z = try zip.open("test/.in/delete.zip", zip.defaultCompressionLevel, 'd');
+    {
+        defer z.close();
+        const deleted = try z.deleteEntries(entries);
+
+        try std.testing.expect(deleted == 3);
+    }
+}
+
+test "Create a password protected zip archive (Traditional PKWARE Encryption)" {
+    var z = try zip.openWithPassword("test/.out/secret.zip", zip.defaultCompressionLevel, 'w', "password");
+    {
+        defer z.close();
+
+        try z.openEntry("secret-1.txt");
+        {
+            defer z.closeEntry();
+
+            try z.writeEntry("Classified data...");
+        }
+    }
+}
+
+test "Extract a password protected zip archive" {
+    var buffer: []u8 = undefined;
+    defer allocator.free(buffer);
+
+    var z = try zip.openWithPassword("test/.out/secret.zip", zip.defaultCompressionLevel, 'r', "password");
+    {
+        defer z.close();
+
+        try z.openEntry("secret-1.txt");
+        {
+            defer z.closeEntry();
+            buffer = try z.readEntry(allocator);
+        }
+    }
+
+    try std.testing.expect(std.mem.eql(u8, buffer, "Classified data..."));
 }

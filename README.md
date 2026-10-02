@@ -1,4 +1,6 @@
 ## Zig wrapper for the amazing zip library for c written by kuba
+## Almost all credit goes to them + the contributors of the original library since all the hard work was done there
+
 ### A portable (OSX/Linux/Windows/Android/iOS), simple zip library written in C (bindings in zig)
 
 This is done by hacking awesome [miniz](https://github.com/richgel999/miniz) library and layering functions on top of the miniz v3.1.2 API.
@@ -15,9 +17,12 @@ Miniz is a lossless, high performance data compression library in a single sourc
 
 It was the reason, why I decided to write zip module on top of the miniz. It required a little bit hacking and wrapping some functions, but I kept simplicity. So, you can grab these 3 files and compile them into your project. I hope that interface is also extremely simple, so you will not have any problems to understand it.
 
+### The Idea For Zig
+
 I (Turtle) have been using kuba zip for ages in my c projects. Since I am now transitioning over to zig as my primary low level language, I decided to make bindings to make my life with archives easier. This features work on the naming and types of the functions to make them fit directly with zig code rather than requiring boilerplate every time you call a function.
 
 ### Examples
+All examples pass the testing suite in the test/ directory.
 
 * Create a new zip archive with default compression level.
 ```zig
@@ -198,175 +203,94 @@ buffer (no internal allocation). `size` is clamped to the bytes remaining after
 call returns the number of bytes actually written, or a negative error code (for
 example when `offset` is past the end of the entry).
 
-```c
-unsigned char buf[16];
-size_t bufsize = sizeof(buf);
+```zig
+var bufarr = std.mem.zeroes([16]u8);
+var buffer: []u8 = bufarr[0..];
 
-struct zip_t *zip = zip_open("foo.zip", 0, 'r');
+var z = try zip.open("foo.zip", zip.defaultCompressionLevel, 'r');
 {
-    zip_entry_open(zip, "foo-1.txt");
-    {
-        size_t offset = 4;
-        ssize_t nread = zip_entry_noallocreadwithoffset(zip, offset, bufsize, (void *)buf);
-        if (nread < 0) {
-            // offset out of range or read error
-        }
-    }
+    defer z.close();
 
-    zip_entry_close(zip);
+    try z.openEntry("foo-1.txt");
+    {
+        defer z.closeEntry();
+
+        const offset: usize = 4;
+        const read = try z.offsetBufferReadEntry(offset, &buffer);
+    }
 }
-zip_close(zip);
 ```
 
 * List of all zip entries
+```zig
+var z = try zip.open("foo.zip", zip.defaultCompressionLevel, 'r');
+{
+    defer z.close();
 
-```c
-struct zip_t *zip = zip_open("foo.zip", 0, 'r');
-int i, n = zip_entries_total(zip);
-for (i = 0; i < n; ++i) {
-    zip_entry_openbyindex(zip, i);
-    {
-        const char *name = zip_entry_name(zip);
-        int isdir = zip_entry_isdir(zip);
-        int issymlink = zip_entry_issymlink(zip);
-        unsigned long long size = zip_entry_size(zip);
-        unsigned int crc32 = zip_entry_crc32(zip);
+    const entryCount = try z.getEntryTotal();
+    for(0..entryCount) |i| {
+        try z.openEntryByIndex(i);
+        {
+            defer z.closeEntry();
+
+            const name = try z.getEntryName();
+            const isDir = try z.isEntryDirectory();
+            const isSymLink = try z.isEntrySymlink();
+            const size = z.getEntrySize();
+            const crc32 = z.getEntrycrc32();
+
+            std.debug.print("Entry - {s}: {{isDir: {s}}}, {{isSymlink: {s}}}, {{size: {d}}}, {{crc32: {d}}}\n", .{
+                name, 
+                if(isDir) "true" else "false", 
+                if(isSymLink) "true" else "false", 
+                size, 
+                crc32
+            });
+        }
     }
-    zip_entry_close(zip);
-}
-zip_close(zip);
-```
-
-* Compress folder (recursively)
-
-```c
-void zip_walk(struct zip_t *zip, const char *path) {
-    DIR *dir;
-    struct dirent *entry;
-    char fullpath[MAX_PATH];
-    struct stat s;
-
-    memset(fullpath, 0, MAX_PATH);
-    dir = opendir(path);
-    assert(dir);
-
-    while ((entry = readdir(dir))) {
-      // skip "." and ".."
-      if (!strcmp(entry->d_name, ".\0") || !strcmp(entry->d_name, "..\0"))
-        continue;
-
-      snprintf(fullpath, sizeof(fullpath), "%s/%s", path, entry->d_name);
-      stat(fullpath, &s);
-      if (S_ISDIR(s.st_mode))
-        zip_walk(zip, fullpath);
-      else {
-        zip_entry_open(zip, fullpath);
-        zip_entry_fwrite(zip, fullpath);
-        zip_entry_close(zip);
-      }
-    }
-
-    closedir(dir);
 }
 ```
 
 * Delete zip archive entries.
-
-```c
-char *entries[] = {"unused.txt", "remove.ini", "delete.me"};
-// size_t indices[] = {0, 1, 2};
-
-struct zip_t *zip = zip_open("foo.zip", 0, 'd');
+```zig
+const entries: []const [:0]const u8 = &.{"unused.txt", "remove.ini", "delete.me"};
+var z = try zip.open("delete.zip", zip.defaultCompressionLevel, 'd');
 {
-    zip_entries_delete(zip, entries, 3);
-
-    // you can also delete by index, instead of by name
-    // zip_entries_deletebyindex(zip, indices, 3);
+    defer z.close();
+    const deleted = try z.deleteEntries(entries);
 }
-zip_close(zip);
 ```
 
 * Create a password-protected zip archive (Traditional PKWARE Encryption).
-
-```c
-struct zip_t *zip = zip_open_with_password("secret.zip", ZIP_DEFAULT_COMPRESSION_LEVEL, 'w', "password");
+```zig
+var z = try zip.openWithPassword("secret.zip", zip.defaultCompressionLevel, 'w', "password");
 {
-    zip_entry_open(zip, "secret-1.txt");
+    defer z.close();
+
+    try z.openEntry("secret-1.txt");
     {
-        const char *buf = "Classified data...\0";
-        zip_entry_write(zip, buf, strlen(buf));
+        defer z.closeEntry();
+
+        try z.writeEntry("Classified data...");
     }
-    zip_entry_close(zip);
 }
-zip_close(zip);
 ```
 
 * Extract a password-protected zip archive.
+```zig
+var buffer: []u8 = undefined;
+defer allocator.free(buffer);
 
-```c
-void *buf = NULL;
-size_t bufsize;
-
-struct zip_t *zip = zip_open_with_password("secret.zip", 0, 'r', "password");
+var z = try zip.openWithPassword("secret.zip", zip.defaultCompressionLevel, 'r', "password");
 {
-    zip_entry_open(zip, "secret-1.txt");
+    defer z.close();
+
+    try z.openEntry("secret-1.txt");
     {
-        zip_entry_read(zip, &buf, &bufsize);
+        defer z.closeEntry();
+        buffer = try z.readEntry(allocator);
     }
-    zip_entry_close(zip);
 }
-zip_close(zip);
-
-free(buf);
-```
-
-* Password-protected archive in memory (stream API).
-
-```c
-char *outbuf = NULL;
-size_t outbufsize = 0;
-
-struct zip_t *zip = zip_stream_open_with_password(NULL, 0, ZIP_DEFAULT_COMPRESSION_LEVEL, 'w', "password");
-{
-    zip_entry_open(zip, "secret-1.txt");
-    {
-        const char *buf = "Classified data...\0";
-        zip_entry_write(zip, buf, strlen(buf));
-    }
-    zip_entry_close(zip);
-
-    zip_stream_copy(zip, (void **)&outbuf, &outbufsize);
-}
-zip_stream_close(zip);
-
-/* read it back */
-void *readbuf = NULL;
-size_t readsize = 0;
-
-zip = zip_stream_open_with_password(outbuf, outbufsize, 0, 'r', "password");
-{
-    zip_entry_open(zip, "secret-1.txt");
-    {
-        zip_entry_read(zip, &readbuf, &readsize);
-    }
-    zip_entry_close(zip);
-}
-zip_stream_close(zip);
-
-free(readbuf);
-free(outbuf);
-```
-
-* Delete entries from a password-protected archive.
-
-```c
-char *entries[] = {"obsolete.txt", "remove-me.dat"};
-
-struct zip_t *zip = zip_open_with_password("secret.zip", 0, 'd', "password");
-{
-    zip_entries_delete(zip, entries, 2);
-}
-zip_close(zip);
 ```
 
 ### No ZIP64
@@ -384,3 +308,22 @@ The implementation accepts an alternate value in the switch labels (so the same 
 Convention:
 - Use `'w' - 64` (integer value 55) when calling `open`, `openStream`, etc., to select write mode without enabling ZIP64.
 - The same pattern applies to other modes: use `'r' - 64`, `'a' - 64`, `'d' - 64` to pick the non-ZIP64 variants.
+
+### Usage
+
+You can build yourself if you have zig 0.16.0 installed along with the Just command runner:
+```bash
+just build
+```
+Optionally, you can run the tests as well:
+```bash
+just test
+```
+The module will be output into .build/
+You can also use the release versions on the [releases](https://github.com/TurtleDSR/kuba_zip_zig/releases) page.
+
+To add it directly to your zig project you can run:
+```bash
+zig fetch --save git+https://github.com/TurtleDSR/kuba_zip_zig
+```
+Don't forget to add it as a dependency in your build.zig
