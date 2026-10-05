@@ -19,26 +19,25 @@ pub fn build(b: *std.Build) void {
     const translate_step = b.step("translate", "Translate C library code");
     translate_step.dependOn(&translate_usf.step);
 
-    //c build step
-    const zip_static_mod = b.addModule("zip_c",.{
+    const zip_native = b.addModule("zip_c",.{
         .link_libc = true,
         .target = target,
         .optimize = optimize,
     });
-    zip_static_mod.addCSourceFiles(.{
+    zip_native.addCSourceFiles(.{
         .files = &.{"zip_c/zip.c"},
     });
-    zip_static_mod.addIncludePath(b.path("zip_c/"));
-    const zip_static_lib = b.addLibrary(.{
+    zip_native.addIncludePath(b.path("zip_c/"));
+    const zip_native_lib = b.addLibrary(.{
         .name = "zip_c",
         .linkage = .static,
-        .root_module = zip_static_mod,
+        .root_module = zip_native,
     });
-
-    const zip_static_artifact = b.addInstallArtifact(zip_static_lib, .{});
     
-    const build_c_step = b.step("build-c", "Build c library code into .lib files");
-    build_c_step.dependOn(&zip_static_artifact.step);
+    //c build step
+    const build_c_step = b.step("build-c", "Build c library code into library files");
+    const zip_native_artifact = b.addInstallArtifact(zip_native_lib, .{});
+    build_c_step.dependOn(&zip_native_artifact.step);
 
     //test step
     const zip_mod = b.addModule("zip", .{
@@ -46,7 +45,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-    zip_mod.linkLibrary(zip_static_lib);
+    zip_mod.linkLibrary(zip_native_lib);
 
     const zip_test_mod = b.addModule("zip_test", .{
         .root_source_file = b.path("test/test.zig"),
