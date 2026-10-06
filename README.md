@@ -309,7 +309,7 @@ Convention:
 - Use `'w' - 64` (integer value 55) when calling `open`, `openStream`, etc., to select write mode without enabling ZIP64.
 - The same pattern applies to other modes: use `'r' - 64`, `'a' - 64`, `'d' - 64` to pick the non-ZIP64 variants.
 
-### Usage
+### Building
 
 You can build yourself if you have zig 0.16.0 installed along with the Just command runner:
 ```bash
@@ -320,8 +320,21 @@ Optionally, you can run the tests as well:
 just test
 ```
 
+### Usage
+
 To add it directly to your zig project you can run:
 ```bash
 zig fetch --save git+https://github.com/TurtleDSR/kuba_zip_zig/
 ```
-Don't forget to add it as a dependency in your build.zig, and make sure to link the module against zip_c.lib.
+In your build.zig, create a module and import it to your code with:
+```zig
+var zipDependency = b.dependency("zip", .{});
+    const zipModule = b.addModule("zip", .{
+        .root_source_file = zipDependency.path("root.zig"),
+        .target = target,
+        .optimize = optimise,
+    });
+    zipModule.link_libc = true;
+
+rootModule.addImport("zip", zipModule);
+```
