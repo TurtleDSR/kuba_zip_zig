@@ -330,7 +330,7 @@ In your build.zig, create a module and import it to your code with:
 ```zig
 var zipDependency = b.dependency("zip", .{});
 const zipModule = b.addModule("zip", .{
-    .root_source_file = zipDependency.path("root.zig"),
+    .root_source_file = zipDependency.path("src/root.zig"),
     .target = target,
     .optimize = optimise,
 });
