@@ -6,3 +6,6 @@ build: translate
 
 test: build
   zig build test --summary all
+
+docs: 
+  zig build test docs --summary all

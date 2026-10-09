@@ -10,5 +10,7 @@
         "lib/zip_c.lib",
         "LICENSE",
         "README.md",
+        "build.zig",
+        "build.zig.zon",
     }
 }
