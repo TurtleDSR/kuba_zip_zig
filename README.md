@@ -18,8 +18,10 @@ Miniz is a lossless, high performance data compression library in a single sourc
 It was the reason, why I decided to write zip module on top of the miniz. It required a little bit hacking and wrapping some functions, but I kept simplicity. So, you can grab these 3 files and compile them into your project. I hope that interface is also extremely simple, so you will not have any problems to understand it.
 
 ### The Idea For Zig
-
 I (Turtle) have been using kuba zip for ages in my c projects. Since I am now transitioning over to zig as my primary low level language, I decided to make bindings to make my life with archives easier. This features work on the naming and types of the functions to make them fit directly with zig code rather than requiring boilerplate every time you call a function.
+
+### Documentation
+For in-depth documentation, take a look at the [docs](https://turtledsr.github.io/kuba_zip_zig/)
 
 ### Examples
 All examples pass the testing suite in the test/ directory.
@@ -330,4 +332,4 @@ In your build.zig, load the dependency and import it to your module with:
 ```zig
 const zip = b.dependency("zip", .{});
 root_module.addImport("zip", zip.module("zip));
-```
+```8
