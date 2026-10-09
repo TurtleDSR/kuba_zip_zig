@@ -81,6 +81,4 @@ pub fn build(b: *std.Build) void {
     });
 
     docs_step.dependOn(&install_docs.step);
-
-    b.installArtifact(zip_lib);
 }
