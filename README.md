@@ -329,5 +329,5 @@ zig fetch --save git+https://github.com/TurtleDSR/kuba_zip_zig/
 In your build.zig, load the dependency and import it to your module with:
 ```zig
 const zip = b.dependency("zip", .{});
-rootModule.addImport("zip", zip.module("zip));
+root_module.addImport("zip", zip.module("zip));
 ```
