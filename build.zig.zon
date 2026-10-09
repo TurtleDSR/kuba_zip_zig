@@ -4,15 +4,13 @@
     .minimum_zig_version = "0.16.0",
     .fingerprint = 0x421d9546e580bad7,
 
-    .build_root = "build",
-
     .paths = .{
         "src/root.zig",
         "src/zip_c.zig",
         "lib/zip_c.lib",
-        "build/build.zig",
         "LICENSE",
         "README.md",
+        "build.zig",
         "build.zig.zon",
     }
 }
