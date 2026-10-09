@@ -1,11 +1,11 @@
 translate:
-  zig build translate build-c
+  zig build --build-file dev.build.zig translate build-c
 
 build: translate
   cp zig-out/lib/* lib/
 
 test: build
-  zig build test --summary all
+  zig build --build-file dev.build.zig test --summary all
 
 docs: 
-  zig build test docs --summary all
+  zig build --build-file dev.build.zig test docs --summary all
