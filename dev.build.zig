@@ -1,4 +1,4 @@
-//for building and testing during development. Because of c translation this script doesnt work when loaded from zig fetch. 
+//for building and testing during development. Because of c translation this script doesnt work when loaded from zig fetch.
 
 const std = @import("std");
 pub fn build(b: *std.Build) void {
@@ -21,7 +21,7 @@ pub fn build(b: *std.Build) void {
     const translate_step = b.step("translate", "Translate C library code");
     translate_step.dependOn(&translate_usf.step);
 
-    const zip_native = b.addModule("zip_c",.{
+    const zip_native = b.addModule("zip_c", .{
         .link_libc = true,
         .target = target,
         .optimize = optimize,
@@ -35,13 +35,13 @@ pub fn build(b: *std.Build) void {
         .linkage = .static,
         .root_module = zip_native,
     });
-    
+
     //c build step
     const build_c_step = b.step("build-c", "Build c library code into library files");
     const zip_native_artifact = b.addInstallArtifact(zip_native_lib, .{});
     build_c_step.dependOn(&zip_native_artifact.step);
 
-    //test step
+    //lib build
     const zip_mod = b.addModule("zip", .{
         .root_source_file = b.path("src/root.zig"),
         .target = target,
@@ -49,6 +49,13 @@ pub fn build(b: *std.Build) void {
     });
     zip_mod.linkLibrary(zip_native_lib);
 
+    const zip_lib = b.addLibrary(.{
+        .name = "zip",
+        .root_module = zip_mod,
+        .linkage = .static,
+    });
+
+    //test step
     const zip_test_mod = b.addModule("zip_test", .{
         .root_source_file = b.path("test/test.zig"),
         .target = target,
@@ -68,10 +75,12 @@ pub fn build(b: *std.Build) void {
     //docs step
     const docs_step = b.step("docs", "Generate docs.");
     const install_docs = b.addInstallDirectory(.{
-        .source_dir = zip_tests.getEmittedDocs(),
-        .install_dir = .prefix,
+        .source_dir = zip_lib.getEmittedDocs(),
+        .install_dir = .{ .custom = "../" },
         .install_subdir = "docs",
     });
 
     docs_step.dependOn(&install_docs.step);
+
+    b.installArtifact(zip_lib);
 }
