@@ -140,31 +140,37 @@ pub fn openStreamWithPassword(stream: []const u8, level: i32, mode: u8, password
 /// *on_extract* - on extract callback.
 ///
 /// *arg* - anonymous struct which you can pass to the on_extract callback.
-pub fn extractStream(stream: []const u8, dir: [:0]const u8, comptime on_extract: *const fn (filename: []const u8, arg: anytype) anyerror!void, arg: anytype) ZipError!void {
-    const t = @TypeOf(arg);
+pub fn extractStream(stream: []const u8, dir: [:0]const u8, comptime on_extract: ?*const fn (filename: []const u8, arg: anytype) anyerror!void, arg: anytype) ZipError!void {
+    var err: c_int = -1;
+    
+    if(on_extract != null) {
+        const t = @TypeOf(arg);
 
-    const Context = struct {
-        user_arg: t,
-        captured_err: ?anyerror = null,
+        const Context = struct {
+            user_arg: t,
+            captured_err: ?anyerror = null,
 
-        fn callback(cbfilename: [*c]const u8, cbarg: ?*anyopaque) callconv(.c) c_int {
-            const ctx: *@This() = @ptrCast(@alignCast(cbarg orelse return 0));
-            on_extract(convertCString(cbfilename), ctx.user_arg) catch |err| {
-                ctx.captured_err = err;
-                return 0;
-            };
-            return 1;
+            fn callback(cbfilename: [*c]const u8, cbarg: ?*anyopaque) callconv(.c) c_int {
+                const ctx: *@This() = @ptrCast(@alignCast(cbarg orelse return 0));
+                on_extract.?(convertCString(cbfilename), ctx.user_arg) catch |cerr| {
+                    ctx.captured_err = cerr;
+                    return 0;
+                };
+                return 1;
+            }
+        };
+
+        var ctx = Context{
+            .user_arg = arg,
+        };
+
+        err = c.zip_stream_extract(stream.ptr, stream.len, dir.ptr, Context.callback, &ctx);
+
+        if (ctx.captured_err != null) {
+            return ZipError.UnknownError;
         }
-    };
-
-    var ctx = Context{
-        .user_arg = arg,
-    };
-
-    const err = c.zip_stream_extract(stream.ptr, stream.len, dir.ptr, Context.callback, &ctx);
-
-    if (ctx.captured_err != null) {
-        return ZipError.UnknownError;
+    } else {
+        err = c.zip_stream_extract(stream.ptr, stream.len, dir.ptr, null, null);
     }
 
     if (err < 0) {
@@ -189,31 +195,37 @@ pub fn extractStream(stream: []const u8, dir: [:0]const u8, comptime on_extract:
 /// *on_extract* - on extract callback.
 ///
 /// *arg* - anonymous struct which you can pass to the on_extract callback.
-pub fn extract(path: [:0]const u8, dir: [:0]const u8, comptime on_extract: *const fn (filename: []const u8, arg: anytype) anyerror!void, arg: anytype) ZipError!void {
-    const t = @TypeOf(arg);
+pub fn extract(path: [:0]const u8, dir: [:0]const u8, comptime on_extract: ?*const fn (filename: []const u8, arg: anytype) anyerror!void, arg: anytype) ZipError!void {
+    var err: c_int = -1;
+    
+    if(on_extract != null) {
+        const t = @TypeOf(arg);
 
-    const Context = struct {
-        user_arg: t,
-        captured_err: ?anyerror = null,
+        const Context = struct {
+            user_arg: t,
+            captured_err: ?anyerror = null,
 
-        fn callback(cbfilename: [*c]const u8, cbarg: ?*anyopaque) callconv(.c) c_int {
-            const ctx: *@This() = @ptrCast(@alignCast(cbarg orelse return 0));
-            on_extract(convertCString(cbfilename), ctx.user_arg) catch |err| {
-                ctx.captured_err = err;
-                return 0;
-            };
-            return 1;
+            fn callback(cbfilename: [*c]const u8, cbarg: ?*anyopaque) callconv(.c) c_int {
+                const ctx: *@This() = @ptrCast(@alignCast(cbarg orelse return 0));
+                on_extract.?(convertCString(cbfilename), ctx.user_arg) catch |cerr| {
+                    ctx.captured_err = cerr;
+                    return 0;
+                };
+                return 1;
+            }
+        };
+
+        var ctx = Context{
+            .user_arg = arg,
+        };
+
+        err = c.zip_extract(path.ptr, dir.ptr, Context.callback, &ctx);
+
+        if (ctx.captured_err != null) {
+            return ZipError.UnknownError;
         }
-    };
-
-    var ctx = Context{
-        .user_arg = arg,
-    };
-
-    const err = c.zip_extract(path.ptr, dir.ptr, Context.callback, &ctx);
-
-    if (ctx.captured_err != null) {
-        return ZipError.UnknownError;
+    } else {
+        err = c.zip_extract(path.ptr, dir.ptr, null, null);
     }
 
     if (err < 0) {
@@ -633,38 +645,44 @@ pub const Zip = struct {
     /// *on_extract* - comptime callback function.
     ///
     /// *arg* - anonymous struct which you can pass to the on_extract callback.
-    pub fn extractEntry(self: *Zip, comptime on_extract: *const fn (entryoffset: u64, data: []const u8, arg: anytype) anyerror!void, arg: anytype) ZipError!void {
-        const t = @TypeOf(arg);
+    pub fn extractEntry(self: *Zip, comptime on_extract: ?*const fn (entryoffset: u64, data: []const u8, arg: anytype) anyerror!void, arg: anytype) ZipError!void {
+        var err: c_int = -1;
+        
+        if(on_extract != null) {
+            const t = @TypeOf(arg);
 
-        const Context = struct {
-            user_arg: t,
-            captured_err: ?anyerror = null,
+            const Context = struct {
+                user_arg: t,
+                captured_err: ?anyerror = null,
 
-            fn callback(cbarg: ?*anyopaque, cboffset: u64, cbdata: ?*const anyopaque, cbsize: usize) callconv(.c) usize {
-                const ctx: *@This() = @ptrCast(@alignCast(cbarg orelse return 0));
+                fn callback(cbarg: ?*anyopaque, cboffset: u64, cbdata: ?*const anyopaque, cbsize: usize) callconv(.c) usize {
+                    const ctx: *@This() = @ptrCast(@alignCast(cbarg orelse return 0));
 
-                if (cbdata == null or cbsize == 0) return 0;
+                    if (cbdata == null or cbsize == 0) return 0;
 
-                const data_bytes: [*]const u8 = @ptrCast(cbdata.?);
-                const chunk = data_bytes[0..cbsize];
+                    const data_bytes: [*]const u8 = @ptrCast(cbdata.?);
+                    const chunk = data_bytes[0..cbsize];
 
-                on_extract(cboffset, chunk, ctx.user_arg) catch |err| {
-                    ctx.captured_err = err;
-                    return 0;
-                };
+                    on_extract.?(cboffset, chunk, ctx.user_arg) catch |cerr| {
+                        ctx.captured_err = cerr;
+                        return 0;
+                    };
 
-                return cbsize;
+                    return cbsize;
+                }
+            };
+
+            var ctx = Context{
+                .user_arg = arg,
+            };
+
+            err = c.zip_entry_extract(self.handle, Context.callback, &ctx);
+
+            if (ctx.captured_err != null) {
+                return ZipError.UnknownError;
             }
-        };
-
-        var ctx = Context{
-            .user_arg = arg,
-        };
-
-        const err = c.zip_entry_extract(self.handle, Context.callback, &ctx);
-
-        if (ctx.captured_err != null) {
-            return ZipError.UnknownError;
+        } else {
+            err = c.zip_entry_extract(self.handle, null, null);
         }
 
         if (err < 0) {
