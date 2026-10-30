@@ -5,8 +5,7 @@
     .fingerprint = 0x421d9546e580bad7,
 
     .paths = .{
-        "src/root.zig",
-        "src/zip_c.zig",
+        "src/",
         "lib/",
         "LICENSE",
         "README.md",
