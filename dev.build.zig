@@ -11,7 +11,10 @@ pub fn build(b: *std.Build) void {
         .root_source_file = b.path("zip_c/zip.h"),
         .target = target,
         .optimize = optimize,
+        .link_libc = true,
     });
+    c_translate.defineCMacro("_GNU_SOURCE", null);
+    c_translate.defineCMacro("_DEFAULT_SOURCE", null);
 
     c_translate.addIncludePath(b.path("zip_c/"));
 
@@ -28,6 +31,12 @@ pub fn build(b: *std.Build) void {
     });
     zip_native.addCSourceFiles(.{
         .files = &.{"zip_c/zip.c"},
+        .flags = &.{
+            "-std=gnu99",
+            "-D_GNU_SOURCE",
+            "-D_DEFAULT_SOURCE",
+            "-includezip_c/compat.h"
+        },
     });
     zip_native.addIncludePath(b.path("zip_c/"));
     const zip_native_lib = b.addLibrary(.{
