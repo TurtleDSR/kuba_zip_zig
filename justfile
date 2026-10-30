@@ -1,7 +1,7 @@
 release:
   @rm -rf lib/
   @mkdir -p lib/
-  just build x86_64-windows-msvc
+  just build x86_64-windows-gnu
   just build aarch64-linux-gnu
 
 translate target='native':
