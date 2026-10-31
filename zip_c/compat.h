@@ -5,7 +5,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-// Map legacy 64-bit structs to modern standard types on glibc targets
+//map legacy 64-bit structs to modern standard types on glibc targets
 #define stat64 stat
 #define lstat64 lstat
 #define fstat64 fstat
