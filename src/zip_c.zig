@@ -118,7 +118,7 @@ pub const struct__G_fpos64_t = extern struct {
     __state: __mbstate_t = @import("std").mem.zeroes(__mbstate_t),
 };
 pub const __fpos64_t = struct__G_fpos64_t;
-pub const struct__IO_marker = opaque {}; // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\bits/types/struct_FILE.h:75:7: warning: struct demoted to opaque type - has bitfield
+pub const struct__IO_marker = opaque {}; // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/types/struct_FILE.h:75:7: warning: struct demoted to opaque type - has bitfield
 pub const struct__IO_FILE = opaque {
     pub const fclose = __root.fclose;
     pub const fflush = __root.fflush;
@@ -133,8 +133,6 @@ pub const struct__IO_FILE = opaque {
     pub const vfscanf = __root.vfscanf;
     pub const fgetc = __root.fgetc;
     pub const getc = __root.getc;
-    pub const getc_unlocked = __root.getc_unlocked;
-    pub const fgetc_unlocked = __root.fgetc_unlocked;
     pub const getw = __root.getw;
     pub const fseek = __root.fseek;
     pub const ftell = __root.ftell;
@@ -151,8 +149,6 @@ pub const struct__IO_FILE = opaque {
     pub const feof = __root.feof;
     pub const ferror = __root.ferror;
     pub const clearerr_unlocked = __root.clearerr_unlocked;
-    pub const feof_unlocked = __root.feof_unlocked;
-    pub const ferror_unlocked = __root.ferror_unlocked;
     pub const fileno = __root.fileno;
     pub const fileno_unlocked = __root.fileno_unlocked;
     pub const pclose = __root.pclose;
@@ -221,7 +217,13 @@ pub extern fn fprintf(noalias __stream: ?*FILE, noalias __format: [*c]const u8, 
 pub extern fn printf(noalias __format: [*c]const u8, ...) c_int;
 pub extern fn sprintf(noalias __s: [*c]u8, noalias __format: [*c]const u8, ...) c_int;
 pub extern fn vfprintf(noalias __s: ?*FILE, noalias __format: [*c]const u8, __arg: __gnuc_va_list) c_int;
-pub extern fn vprintf(noalias __format: [*c]const u8, __arg: __gnuc_va_list) c_int;
+pub fn vprintf(noalias arg___fmt: [*c]const u8, arg___arg: __gnuc_va_list) callconv(.c) c_int {
+    var __fmt = arg___fmt;
+    _ = &__fmt;
+    var __arg = arg___arg;
+    _ = &__arg;
+    return vfprintf(stdout, __fmt, __arg);
+}
 pub extern fn vsprintf(noalias __s: [*c]u8, noalias __format: [*c]const u8, __arg: __gnuc_va_list) c_int;
 pub extern fn snprintf(noalias __s: [*c]u8, __maxlen: usize, noalias __format: [*c]const u8, ...) c_int;
 pub extern fn vsnprintf(noalias __s: [*c]u8, __maxlen: usize, noalias __format: [*c]const u8, __arg: __gnuc_va_list) c_int;
@@ -238,23 +240,43 @@ pub extern fn vscanf(noalias __format: [*c]const u8, __arg: __gnuc_va_list) c_in
 pub extern fn vsscanf(noalias __s: [*c]const u8, noalias __format: [*c]const u8, __arg: __gnuc_va_list) c_int;
 pub extern fn fgetc(__stream: ?*FILE) c_int;
 pub extern fn getc(__stream: ?*FILE) c_int;
-pub extern fn getchar() c_int;
-pub extern fn getc_unlocked(__stream: ?*FILE) c_int;
-pub extern fn getchar_unlocked() c_int;
-pub extern fn fgetc_unlocked(__stream: ?*FILE) c_int;
+pub fn getchar() callconv(.c) c_int {
+    return getc(stdin);
+} // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/types/struct_FILE.h:114:27: warning: member access of demoted record
+// C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/stdio.h:66:1: warning: unable to translate function, demoted to extern
+pub extern fn getc_unlocked(arg___fp: ?*FILE) callconv(.c) c_int; // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/types/struct_FILE.h:114:27: warning: member access of demoted record
+// C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/stdio.h:73:1: warning: unable to translate function, demoted to extern
+pub extern fn getchar_unlocked() callconv(.c) c_int; // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/types/struct_FILE.h:114:27: warning: member access of demoted record
+// C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/stdio.h:56:1: warning: unable to translate function, demoted to extern
+pub extern fn fgetc_unlocked(arg___fp: ?*FILE) callconv(.c) c_int;
 pub extern fn fputc(__c: c_int, __stream: ?*FILE) c_int;
 pub extern fn putc(__c: c_int, __stream: ?*FILE) c_int;
-pub extern fn putchar(__c: c_int) c_int;
-pub extern fn fputc_unlocked(__c: c_int, __stream: ?*FILE) c_int;
-pub extern fn putc_unlocked(__c: c_int, __stream: ?*FILE) c_int;
-pub extern fn putchar_unlocked(__c: c_int) c_int;
+pub fn putchar(arg___c: c_int) callconv(.c) c_int {
+    var __c = arg___c;
+    _ = &__c;
+    return putc(__c, stdout);
+} // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/types/struct_FILE.h:118:27: warning: member access of demoted record
+// C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/stdio.h:91:1: warning: unable to translate function, demoted to extern
+pub extern fn fputc_unlocked(arg___c: c_int, arg___stream: ?*FILE) callconv(.c) c_int; // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/types/struct_FILE.h:118:27: warning: member access of demoted record
+// C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/stdio.h:101:1: warning: unable to translate function, demoted to extern
+pub extern fn putc_unlocked(arg___c: c_int, arg___stream: ?*FILE) callconv(.c) c_int; // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/types/struct_FILE.h:118:27: warning: member access of demoted record
+// C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/stdio.h:108:1: warning: unable to translate function, demoted to extern
+pub extern fn putchar_unlocked(arg___c: c_int) callconv(.c) c_int;
 pub extern fn getw(__stream: ?*FILE) c_int;
 pub extern fn putw(__w: c_int, __stream: ?*FILE) c_int;
 pub extern fn fgets(noalias __s: [*c]u8, __n: c_int, noalias __stream: ?*FILE) [*c]u8;
 pub extern fn fgets_unlocked(noalias __s: [*c]u8, __n: c_int, noalias __stream: ?*FILE) [*c]u8;
 pub extern fn __getdelim(noalias __lineptr: [*c][*c]u8, noalias __n: [*c]usize, __delimiter: c_int, noalias __stream: ?*FILE) __ssize_t;
 pub extern fn getdelim(noalias __lineptr: [*c][*c]u8, noalias __n: [*c]usize, __delimiter: c_int, noalias __stream: ?*FILE) __ssize_t;
-pub extern fn getline(noalias __lineptr: [*c][*c]u8, noalias __n: [*c]usize, noalias __stream: ?*FILE) __ssize_t;
+pub fn getline(arg___lineptr: [*c][*c]u8, arg___n: [*c]usize, arg___stream: ?*FILE) callconv(.c) __ssize_t {
+    var __lineptr = arg___lineptr;
+    _ = &__lineptr;
+    var __n = arg___n;
+    _ = &__n;
+    var __stream = arg___stream;
+    _ = &__stream;
+    return __getdelim(__lineptr, __n, '\n', __stream);
+}
 pub extern fn fputs(noalias __s: [*c]const u8, noalias __stream: ?*FILE) c_int;
 pub extern fn puts(__s: [*c]const u8) c_int;
 pub extern fn ungetc(__c: c_int, __stream: ?*FILE) c_int;
@@ -277,9 +299,11 @@ pub extern fn fsetpos64(__stream: ?*FILE, __pos: [*c]const fpos64_t) c_int;
 pub extern fn clearerr(__stream: ?*FILE) void;
 pub extern fn feof(__stream: ?*FILE) c_int;
 pub extern fn ferror(__stream: ?*FILE) c_int;
-pub extern fn clearerr_unlocked(__stream: ?*FILE) void;
-pub extern fn feof_unlocked(__stream: ?*FILE) c_int;
-pub extern fn ferror_unlocked(__stream: ?*FILE) c_int;
+pub extern fn clearerr_unlocked(__stream: ?*FILE) void; // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/types/struct_FILE.h:123:42: warning: member access of demoted record
+// C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/stdio.h:128:8: warning: unable to translate function, demoted to extern
+pub extern fn feof_unlocked(arg___stream: ?*FILE) callconv(.c) c_int; // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/types/struct_FILE.h:126:44: warning: member access of demoted record
+// C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/stdio.h:135:8: warning: unable to translate function, demoted to extern
+pub extern fn ferror_unlocked(arg___stream: ?*FILE) callconv(.c) c_int;
 pub extern fn perror(__s: [*c]const u8) void;
 pub extern fn fileno(__stream: ?*FILE) c_int;
 pub extern fn fileno_unlocked(__stream: ?*FILE) c_int;
@@ -682,6 +706,7 @@ pub inline fn __building_module(x: anytype) @TypeOf(@as(c_int, 0)) {
     _ = &x;
     return @as(c_int, 0);
 }
+pub const __OPTIMIZE__ = @as(c_int, 1);
 pub const linux = @as(c_int, 1);
 pub const __linux = @as(c_int, 1);
 pub const __linux__ = @as(c_int, 1);
@@ -771,10 +796,10 @@ pub const __SIZEOF_INT128__ = @as(c_int, 16);
 pub const __INTPTR_TYPE__ = c_long;
 pub const __UINTPTR_TYPE__ = c_ulong;
 pub const __INTMAX_TYPE__ = c_long;
-pub const __INTMAX_C_SUFFIX__ = @compileError("unable to translate macro: undefined identifier `L`"); // <builtin>:109:9
+pub const __INTMAX_C_SUFFIX__ = @compileError("unable to translate macro: undefined identifier `L`"); // <builtin>:110:9
 pub const __INTMAX_C = __helpers.L_SUFFIX;
 pub const __UINTMAX_TYPE__ = c_ulong;
-pub const __UINTMAX_C_SUFFIX__ = @compileError("unable to translate macro: undefined identifier `UL`"); // <builtin>:112:9
+pub const __UINTMAX_C_SUFFIX__ = @compileError("unable to translate macro: undefined identifier `UL`"); // <builtin>:113:9
 pub const __UINTMAX_C = __helpers.UL_SUFFIX;
 pub const __PTRDIFF_TYPE__ = c_long;
 pub const __SIZE_TYPE__ = c_ulong;
@@ -809,7 +834,7 @@ pub inline fn __INT32_C(c: anytype) @TypeOf(c) {
 pub const __INT64_TYPE__ = c_long;
 pub const __INT64_FMTd__ = "ld";
 pub const __INT64_FMTi__ = "li";
-pub const __INT64_C_SUFFIX__ = @compileError("unable to translate macro: undefined identifier `L`"); // <builtin>:138:9
+pub const __INT64_C_SUFFIX__ = @compileError("unable to translate macro: undefined identifier `L`"); // <builtin>:139:9
 pub const __UINT8_TYPE__ = u8;
 pub const __UINT8_FMTo__ = "hho";
 pub const __UINT8_FMTu__ = "hhu";
@@ -839,7 +864,7 @@ pub const __UINT32_FMTo__ = "o";
 pub const __UINT32_FMTu__ = "u";
 pub const __UINT32_FMTx__ = "x";
 pub const __UINT32_FMTX__ = "X";
-pub const __UINT32_C_SUFFIX__ = @compileError("unable to translate macro: undefined identifier `U`"); // <builtin>:163:9
+pub const __UINT32_C_SUFFIX__ = @compileError("unable to translate macro: undefined identifier `U`"); // <builtin>:164:9
 pub const __UINT32_C = __helpers.U_SUFFIX;
 pub const __UINT32_MAX__ = __helpers.promoteIntLiteral(c_uint, 4294967295, .decimal);
 pub const __INT32_MAX__ = __helpers.promoteIntLiteral(c_int, 2147483647, .decimal);
@@ -848,7 +873,7 @@ pub const __UINT64_FMTo__ = "lo";
 pub const __UINT64_FMTu__ = "lu";
 pub const __UINT64_FMTx__ = "lx";
 pub const __UINT64_FMTX__ = "lX";
-pub const __UINT64_C_SUFFIX__ = @compileError("unable to translate macro: undefined identifier `UL`"); // <builtin>:172:9
+pub const __UINT64_C_SUFFIX__ = @compileError("unable to translate macro: undefined identifier `UL`"); // <builtin>:173:9
 pub const __UINT64_MAX__ = __helpers.promoteIntLiteral(c_ulong, 18446744073709551615, .decimal);
 pub const __INT64_MAX__ = __helpers.promoteIntLiteral(c_long, 9223372036854775807, .decimal);
 pub const __INT_LEAST8_TYPE__ = i8;
@@ -1000,6 +1025,7 @@ pub const __FLT_RADIX__ = @as(c_int, 2);
 pub const __DECIMAL_DIG__ = __LDBL_DECIMAL_DIG__;
 pub const __pic__ = @as(c_int, 2);
 pub const __PIC__ = @as(c_int, 2);
+pub const NDEBUG = @as(c_int, 1);
 pub const __GLIBC_MINOR__ = @as(c_int, 31);
 pub const _GNU_SOURCE = @as(c_int, 1);
 pub const ZIP_H = "";
@@ -1017,7 +1043,7 @@ pub inline fn __glibc_clang_prereq(maj: anytype, min: anytype) @TypeOf(@as(c_int
     _ = &min;
     return @as(c_int, 0);
 }
-pub const __GLIBC_USE = @compileError("unable to translate macro: undefined identifier `__GLIBC_USE_`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\features.h:197:9
+pub const __GLIBC_USE = @compileError("unable to translate macro: undefined identifier `__GLIBC_USE_`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\features.h:197:9
 pub const _ISOC95_SOURCE = @as(c_int, 1);
 pub const _ISOC99_SOURCE = @as(c_int, 1);
 pub const _ISOC11_SOURCE = @as(c_int, 1);
@@ -1076,19 +1102,19 @@ pub inline fn __GLIBC_PREREQ(maj: anytype, min: anytype) @TypeOf(((__GLIBC__ << 
     return ((__GLIBC__ << @as(c_int, 16)) + __GLIBC_MINOR__) >= ((maj << @as(c_int, 16)) + min);
 }
 pub const _SYS_CDEFS_H = @as(c_int, 1);
-pub const __glibc_has_attribute = @compileError("unable to translate macro: undefined identifier `__has_attribute`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:45:10
+pub const __glibc_has_attribute = @compileError("unable to translate macro: undefined identifier `__has_attribute`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:45:10
 pub inline fn __glibc_has_builtin(name: anytype) @TypeOf(__builtin.has_builtin(name)) {
     _ = &name;
     return __builtin.has_builtin(name);
 }
-pub const __glibc_has_extension = @compileError("unable to translate macro: undefined identifier `__has_extension`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:55:10
-pub const __LEAF = @compileError("unable to translate macro: undefined identifier `__leaf__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:65:11
-pub const __LEAF_ATTR = @compileError("unable to translate macro: undefined identifier `__leaf__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:66:11
-pub const __THROW = @compileError("unable to translate macro: undefined identifier `__nothrow__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:79:11
-pub const __THROWNL = @compileError("unable to translate macro: undefined identifier `__nothrow__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:80:11
-pub const __NTH = @compileError("unable to translate macro: undefined identifier `__nothrow__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:81:11
-pub const __NTHNL = @compileError("unable to translate macro: undefined identifier `__nothrow__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:82:11
-pub const __COLD = @compileError("unable to translate macro: undefined identifier `__cold__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:102:11
+pub const __glibc_has_extension = @compileError("unable to translate macro: undefined identifier `__has_extension`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:55:10
+pub const __LEAF = @compileError("unable to translate macro: undefined identifier `__leaf__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:65:11
+pub const __LEAF_ATTR = @compileError("unable to translate macro: undefined identifier `__leaf__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:66:11
+pub const __THROW = @compileError("unable to translate macro: undefined identifier `__nothrow__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:79:11
+pub const __THROWNL = @compileError("unable to translate macro: undefined identifier `__nothrow__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:80:11
+pub const __NTH = @compileError("unable to translate macro: undefined identifier `__nothrow__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:81:11
+pub const __NTHNL = @compileError("unable to translate macro: undefined identifier `__nothrow__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:82:11
+pub const __COLD = @compileError("unable to translate macro: undefined identifier `__cold__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:102:11
 pub inline fn __P(args: anytype) @TypeOf(args) {
     _ = &args;
     return args;
@@ -1097,8 +1123,8 @@ pub inline fn __PMT(args: anytype) @TypeOf(args) {
     _ = &args;
     return args;
 }
-pub const __CONCAT = @compileError("unable to translate C expr: unexpected token '##'"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:131:9
-pub const __STRING = @compileError("unable to translate C expr: unexpected token ''"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:132:9
+pub const __CONCAT = @compileError("unable to translate C expr: unexpected token '##'"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:131:9
+pub const __STRING = @compileError("unable to translate C expr: unexpected token ''"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:132:9
 pub const __ptr_t = ?*anyopaque;
 pub const __BEGIN_DECLS = "";
 pub const __END_DECLS = "";
@@ -1119,14 +1145,14 @@ pub inline fn __glibc_objsize(__o: anytype) @TypeOf(__bos(__o)) {
     _ = &__o;
     return __bos(__o);
 }
-pub const __warnattr = @compileError("unable to translate macro: undefined identifier `__warning__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:366:10
-pub const __errordecl = @compileError("unable to translate macro: undefined identifier `__error__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:367:10
-pub const __flexarr = @compileError("unable to translate C expr: unexpected token '['"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:379:10
+pub const __warnattr = @compileError("unable to translate macro: undefined identifier `__warning__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:366:10
+pub const __errordecl = @compileError("unable to translate macro: undefined identifier `__error__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:367:10
+pub const __flexarr = @compileError("unable to translate C expr: unexpected token '['"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:379:10
 pub const __glibc_c99_flexarr_available = @as(c_int, 1);
-pub const __REDIRECT = @compileError("unable to translate C expr: unexpected token '__asm__'"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:410:10
-pub const __REDIRECT_NTH = @compileError("unable to translate C expr: unexpected token '__asm__'"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:417:11
-pub const __REDIRECT_NTHNL = @compileError("unable to translate C expr: unexpected token '__asm__'"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:419:11
-pub const __ASMNAME = @compileError("unable to translate macro: undefined identifier `__USER_LABEL_PREFIX__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:422:10
+pub const __REDIRECT = @compileError("unable to translate C expr: unexpected token '__asm__'"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:410:10
+pub const __REDIRECT_NTH = @compileError("unable to translate C expr: unexpected token '__asm__'"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:417:11
+pub const __REDIRECT_NTHNL = @compileError("unable to translate C expr: unexpected token '__asm__'"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:419:11
+pub const __ASMNAME = @compileError("unable to translate macro: undefined identifier `__USER_LABEL_PREFIX__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:422:10
 pub inline fn __ASMNAME2(prefix: anytype, cname: anytype) @TypeOf(__STRING(prefix) ++ cname) {
     _ = &prefix;
     _ = &cname;
@@ -1134,34 +1160,34 @@ pub inline fn __ASMNAME2(prefix: anytype, cname: anytype) @TypeOf(__STRING(prefi
 }
 pub const __REDIRECT_FORTIFY = __REDIRECT;
 pub const __REDIRECT_FORTIFY_NTH = __REDIRECT_NTH;
-pub const __attribute_malloc__ = @compileError("unable to translate macro: undefined identifier `__malloc__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:452:10
-pub const __attribute_alloc_size__ = @compileError("unable to translate macro: undefined identifier `__alloc_size__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:460:10
-pub const __attribute_alloc_align__ = @compileError("unable to translate macro: undefined identifier `__alloc_align__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:469:10
-pub const __attribute_pure__ = @compileError("unable to translate macro: undefined identifier `__pure__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:479:10
-pub const __attribute_const__ = @compileError("unable to translate C expr: unexpected token '__attribute__'"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:486:10
-pub const __attribute_maybe_unused__ = @compileError("unable to translate macro: undefined identifier `__unused__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:492:10
-pub const __attribute_used__ = @compileError("unable to translate macro: undefined identifier `__used__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:501:10
-pub const __attribute_noinline__ = @compileError("unable to translate macro: undefined identifier `__noinline__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:502:10
-pub const __attribute_deprecated__ = @compileError("unable to translate macro: undefined identifier `__deprecated__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:510:10
-pub const __attribute_deprecated_msg__ = @compileError("unable to translate macro: undefined identifier `__deprecated__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:520:10
-pub const __attribute_format_arg__ = @compileError("unable to translate macro: undefined identifier `__format_arg__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:533:10
-pub const __attribute_format_strfmon__ = @compileError("unable to translate macro: undefined identifier `__format__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:543:10
-pub const __attribute_nonnull__ = @compileError("unable to translate macro: undefined identifier `__nonnull__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:555:11
+pub const __attribute_malloc__ = @compileError("unable to translate macro: undefined identifier `__malloc__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:452:10
+pub const __attribute_alloc_size__ = @compileError("unable to translate macro: undefined identifier `__alloc_size__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:460:10
+pub const __attribute_alloc_align__ = @compileError("unable to translate macro: undefined identifier `__alloc_align__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:469:10
+pub const __attribute_pure__ = @compileError("unable to translate macro: undefined identifier `__pure__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:479:10
+pub const __attribute_const__ = @compileError("unable to translate C expr: unexpected token '__attribute__'"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:486:10
+pub const __attribute_maybe_unused__ = @compileError("unable to translate macro: undefined identifier `__unused__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:492:10
+pub const __attribute_used__ = @compileError("unable to translate macro: undefined identifier `__used__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:501:10
+pub const __attribute_noinline__ = @compileError("unable to translate macro: undefined identifier `__noinline__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:502:10
+pub const __attribute_deprecated__ = @compileError("unable to translate macro: undefined identifier `__deprecated__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:510:10
+pub const __attribute_deprecated_msg__ = @compileError("unable to translate macro: undefined identifier `__deprecated__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:520:10
+pub const __attribute_format_arg__ = @compileError("unable to translate macro: undefined identifier `__format_arg__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:533:10
+pub const __attribute_format_strfmon__ = @compileError("unable to translate macro: undefined identifier `__format__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:543:10
+pub const __attribute_nonnull__ = @compileError("unable to translate macro: undefined identifier `__nonnull__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:555:11
 pub inline fn __nonnull(params: anytype) @TypeOf(__attribute_nonnull__(params)) {
     _ = &params;
     return __attribute_nonnull__(params);
 }
-pub const __returns_nonnull = @compileError("unable to translate macro: undefined identifier `__returns_nonnull__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:568:10
-pub const __attribute_warn_unused_result__ = @compileError("unable to translate macro: undefined identifier `__warn_unused_result__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:577:10
+pub const __returns_nonnull = @compileError("unable to translate macro: undefined identifier `__returns_nonnull__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:568:10
+pub const __attribute_warn_unused_result__ = @compileError("unable to translate macro: undefined identifier `__warn_unused_result__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:577:10
 pub const __wur = "";
-pub const __always_inline = @compileError("unable to translate macro: undefined identifier `__always_inline__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:595:10
-pub const __attribute_artificial__ = @compileError("unable to translate macro: undefined identifier `__artificial__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:604:10
-pub const __extern_inline = @compileError("unable to translate C expr: unexpected token 'extern'"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:626:11
-pub const __extern_always_inline = @compileError("unable to translate C expr: unexpected token 'extern'"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:627:11
+pub const __always_inline = @compileError("unable to translate macro: undefined identifier `__always_inline__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:595:10
+pub const __attribute_artificial__ = @compileError("unable to translate macro: undefined identifier `__artificial__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:604:10
+pub const __extern_inline = @compileError("unable to translate C expr: unexpected token 'extern'"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:626:11
+pub const __extern_always_inline = @compileError("unable to translate C expr: unexpected token 'extern'"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:627:11
 pub const __fortify_function = __extern_always_inline ++ __attribute_artificial__;
-pub const __va_arg_pack = @compileError("unable to translate macro: undefined identifier `__builtin_va_arg_pack`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:638:10
-pub const __va_arg_pack_len = @compileError("unable to translate macro: undefined identifier `__builtin_va_arg_pack_len`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:639:10
-pub const __restrict_arr = @compileError("unable to translate C expr: unexpected token '__restrict'"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:666:10
+pub const __va_arg_pack = @compileError("unable to translate macro: undefined identifier `__builtin_va_arg_pack`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:638:10
+pub const __va_arg_pack_len = @compileError("unable to translate macro: undefined identifier `__builtin_va_arg_pack_len`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:639:10
+pub const __restrict_arr = @compileError("unable to translate C expr: unexpected token '__restrict'"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:666:10
 pub inline fn __glibc_unlikely(cond: anytype) @TypeOf(__builtin.expect(cond, @as(c_int, 0))) {
     _ = &cond;
     return __builtin.expect(cond, @as(c_int, 0));
@@ -1218,10 +1244,10 @@ pub inline fn __REDIRECT_NTH_LDBL(name: anytype, proto: anytype, alias: anytype)
     _ = &alias;
     return __REDIRECT_NTH(name, proto, alias);
 }
-pub const __glibc_macro_warning1 = @compileError("unable to translate macro: undefined identifier `_Pragma`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:807:10
-pub const __glibc_macro_warning = @compileError("unable to translate macro: undefined identifier `GCC`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:808:10
+pub const __glibc_macro_warning1 = @compileError("unable to translate macro: undefined identifier `_Pragma`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:807:10
+pub const __glibc_macro_warning = @compileError("unable to translate macro: undefined identifier `GCC`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:808:10
 pub const __HAVE_GENERIC_SELECTION = @as(c_int, 1);
-pub const __glibc_const_generic = @compileError("unable to translate C expr: expected type instead got 'const'"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:837:10
+pub const __glibc_const_generic = @compileError("unable to translate C expr: expected type instead got 'const'"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:837:10
 pub inline fn __fortified_attr_access(a: anytype, o: anytype, s: anytype) void {
     _ = &a;
     _ = &o;
@@ -1242,8 +1268,9 @@ pub inline fn __attr_dealloc(dealloc: anytype, argno: anytype) void {
     return;
 }
 pub const __attr_dealloc_free = "";
-pub const __attribute_returns_twice__ = @compileError("unable to translate macro: undefined identifier `__returns_twice__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:884:10
-pub const __attribute_struct_may_alias__ = @compileError("unable to translate macro: undefined identifier `__may_alias__`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\sys/cdefs.h:893:10
+pub const __attribute_returns_twice__ = @compileError("unable to translate macro: undefined identifier `__returns_twice__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:884:10
+pub const __attribute_struct_may_alias__ = @compileError("unable to translate macro: undefined identifier `__may_alias__`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\sys/cdefs.h:893:10
+pub const __USE_EXTERN_INLINES = @as(c_int, 1);
 pub const __stub___compat_bdflush = "";
 pub const __stub___compat_create_module = "";
 pub const __stub___compat_get_kernel_syms = "";
@@ -1302,7 +1329,7 @@ pub const __KEY_T_TYPE = __S32_TYPE;
 pub const __CLOCKID_T_TYPE = __S32_TYPE;
 pub const __TIMER_T_TYPE = ?*anyopaque;
 pub const __BLKSIZE_T_TYPE = __S32_TYPE;
-pub const __FSID_T_TYPE = @compileError("unable to translate macro: undefined identifier `__val`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\bits/typesizes.h:72:9
+pub const __FSID_T_TYPE = @compileError("unable to translate macro: undefined identifier `__val`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/typesizes.h:72:9
 pub const __SSIZE_T_TYPE = __SWORD_TYPE;
 pub const __SYSCALL_SLONG_TYPE = __SLONGWORD_TYPE;
 pub const __SYSCALL_ULONG_TYPE = __ULONGWORD_TYPE;
@@ -1440,14 +1467,14 @@ pub const __need_size_t = "";
 pub const __need_NULL = "";
 pub const __STDC_VERSION_STDDEF_H__ = @as(c_long, 202311);
 pub const NULL = __helpers.cast(?*anyopaque, @as(c_int, 0));
-pub const offsetof = @compileError("unable to translate macro: undefined identifier `__builtin_offsetof`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\compiler\aro\include\stddef.h:18:9
+pub const offsetof = @compileError("unable to translate macro: undefined identifier `__builtin_offsetof`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\compiler\aro\include\stddef.h:18:9
 pub const __need___va_list = "";
 pub const __STDC_VERSION_STDARG_H__ = @as(c_int, 0);
-pub const va_start = @compileError("unable to translate macro: undefined identifier `__builtin_va_start`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\compiler\aro\include\stdarg.h:12:9
-pub const va_end = @compileError("unable to translate macro: undefined identifier `__builtin_va_end`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\compiler\aro\include\stdarg.h:14:9
-pub const va_arg = @compileError("unable to translate macro: undefined identifier `__builtin_va_arg`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\compiler\aro\include\stdarg.h:15:9
-pub const __va_copy = @compileError("unable to translate macro: undefined identifier `__builtin_va_copy`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\compiler\aro\include\stdarg.h:18:9
-pub const va_copy = @compileError("unable to translate macro: undefined identifier `__builtin_va_copy`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\compiler\aro\include\stdarg.h:22:9
+pub const va_start = @compileError("unable to translate macro: undefined identifier `__builtin_va_start`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\compiler\aro\include\stdarg.h:12:9
+pub const va_end = @compileError("unable to translate macro: undefined identifier `__builtin_va_end`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\compiler\aro\include\stdarg.h:14:9
+pub const va_arg = @compileError("unable to translate macro: undefined identifier `__builtin_va_arg`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\compiler\aro\include\stdarg.h:15:9
+pub const __va_copy = @compileError("unable to translate macro: undefined identifier `__builtin_va_copy`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\compiler\aro\include\stdarg.h:18:9
+pub const va_copy = @compileError("unable to translate macro: undefined identifier `__builtin_va_copy`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\compiler\aro\include\stdarg.h:22:9
 pub const __GNUC_VA_LIST = @as(c_int, 1);
 pub const _____fpos_t_defined = @as(c_int, 1);
 pub const ____mbstate_t_defined = @as(c_int, 1);
@@ -1455,8 +1482,8 @@ pub const _____fpos64_t_defined = @as(c_int, 1);
 pub const ____FILE_defined = @as(c_int, 1);
 pub const __FILE_defined = @as(c_int, 1);
 pub const __struct_FILE_defined = @as(c_int, 1);
-pub const __getc_unlocked_body = @compileError("TODO postfix inc/dec expr"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\bits/types/struct_FILE.h:113:9
-pub const __putc_unlocked_body = @compileError("TODO postfix inc/dec expr"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\bits/types/struct_FILE.h:117:9
+pub const __getc_unlocked_body = @compileError("TODO postfix inc/dec expr"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/types/struct_FILE.h:113:9
+pub const __putc_unlocked_body = @compileError("TODO postfix inc/dec expr"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/types/struct_FILE.h:117:9
 pub const _IO_EOF_SEEN = @as(c_int, 0x0010);
 pub inline fn __feof_unlocked_body(_fp: anytype) @TypeOf((_fp.*._flags & _IO_EOF_SEEN) != @as(c_int, 0)) {
     _ = &_fp;
@@ -1504,8 +1531,8 @@ pub const __HAVE_FLOAT128 = @as(c_int, 1);
 pub const __HAVE_DISTINCT_FLOAT128 = @as(c_int, 0);
 pub const __HAVE_FLOAT64X = __HAVE_FLOAT128;
 pub const __HAVE_FLOAT64X_LONG_DOUBLE = __HAVE_FLOAT128;
-pub const __f128 = @compileError("unable to translate macro: undefined identifier `f128`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\bits/floatn.h:62:12
-pub const __CFLOAT128 = @compileError("unable to translate: invalid numeric type"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\bits/floatn.h:71:12
+pub const __f128 = @compileError("unable to translate macro: undefined identifier `f128`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/floatn.h:62:12
+pub const __CFLOAT128 = @compileError("unable to translate: invalid numeric type"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/floatn.h:71:12
 pub const _BITS_FLOATN_COMMON_H = "";
 pub const __HAVE_FLOAT16 = @as(c_int, 0);
 pub const __HAVE_FLOAT32 = @as(c_int, 1);
@@ -1520,14 +1547,15 @@ pub const __HAVE_DISTINCT_FLOAT64X = @as(c_int, 0);
 pub const __HAVE_DISTINCT_FLOAT128X = __HAVE_FLOAT128X;
 pub const __HAVE_FLOAT128_UNLIKE_LDBL = (__HAVE_DISTINCT_FLOAT128 != 0) and (__LDBL_MANT_DIG__ != @as(c_int, 113));
 pub const __HAVE_FLOATN_NOT_TYPEDEF = @as(c_int, 1);
-pub const __f32 = @compileError("unable to translate macro: undefined identifier `f32`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\bits/floatn-common.h:93:12
-pub const __f64 = @compileError("unable to translate macro: undefined identifier `f64`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\bits/floatn-common.h:105:12
-pub const __f32x = @compileError("unable to translate macro: undefined identifier `f32x`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\bits/floatn-common.h:113:12
-pub const __f64x = @compileError("unable to translate macro: undefined identifier `f64x`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\bits/floatn-common.h:125:12
-pub const __CFLOAT32 = @compileError("unable to translate: invalid numeric type"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\bits/floatn-common.h:151:12
-pub const __CFLOAT64 = @compileError("unable to translate: invalid numeric type"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\bits/floatn-common.h:163:12
-pub const __CFLOAT32X = @compileError("unable to translate: invalid numeric type"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\bits/floatn-common.h:171:12
-pub const __CFLOAT64X = @compileError("unable to translate: invalid numeric type"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\bits/floatn-common.h:183:12
+pub const __f32 = @compileError("unable to translate macro: undefined identifier `f32`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/floatn-common.h:93:12
+pub const __f64 = @compileError("unable to translate macro: undefined identifier `f64`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/floatn-common.h:105:12
+pub const __f32x = @compileError("unable to translate macro: undefined identifier `f32x`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/floatn-common.h:113:12
+pub const __f64x = @compileError("unable to translate macro: undefined identifier `f64x`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/floatn-common.h:125:12
+pub const __CFLOAT32 = @compileError("unable to translate: invalid numeric type"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/floatn-common.h:151:12
+pub const __CFLOAT64 = @compileError("unable to translate: invalid numeric type"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/floatn-common.h:163:12
+pub const __CFLOAT32X = @compileError("unable to translate: invalid numeric type"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/floatn-common.h:171:12
+pub const __CFLOAT64X = @compileError("unable to translate: invalid numeric type"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/floatn-common.h:183:12
+pub const _BITS_STDIO_H = @as(c_int, 1);
 pub const _STRING_H = @as(c_int, 1);
 pub const __GLIBC_USE_LIB_EXT2 = @as(c_int, 1);
 pub const __GLIBC_USE_IEC_60559_BFP_EXT = @as(c_int, 1);
@@ -1539,8 +1567,8 @@ pub const __GLIBC_USE_IEC_60559_TYPES_EXT = @as(c_int, 1);
 pub const __STDC_VERSION_STRING_H__ = @as(c_long, 202311);
 pub const _BITS_TYPES_LOCALE_T_H = @as(c_int, 1);
 pub const _BITS_TYPES___LOCALE_T_H = @as(c_int, 1);
-pub const strdupa = @compileError("unable to translate macro: undefined identifier `__old`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\string.h:216:10
-pub const strndupa = @compileError("unable to translate macro: undefined identifier `__old`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\string.h:226:10
+pub const strdupa = @compileError("unable to translate macro: undefined identifier `__old`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\string.h:216:10
+pub const strndupa = @compileError("unable to translate macro: undefined identifier `__old`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\string.h:226:10
 pub const _STRINGS_H = @as(c_int, 1);
 pub const _SYS_TYPES_H = @as(c_int, 1);
 pub const __u_char_defined = "";
@@ -1645,9 +1673,9 @@ pub inline fn le64toh(x: anytype) @TypeOf(__uint64_identity(x)) {
     return __uint64_identity(x);
 }
 pub const _SYS_SELECT_H = @as(c_int, 1);
-pub const __FD_ZERO = @compileError("unable to translate macro: undefined identifier `__i`"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\bits/select.h:25:9
-pub const __FD_SET = @compileError("unable to translate C expr: expected ')' instead got '|='"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\bits/select.h:32:9
-pub const __FD_CLR = @compileError("unable to translate C expr: expected ')' instead got '&='"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\bits/select.h:34:9
+pub const __FD_ZERO = @compileError("unable to translate macro: undefined identifier `__i`"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/select.h:25:9
+pub const __FD_SET = @compileError("unable to translate C expr: expected ')' instead got '|='"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/select.h:32:9
+pub const __FD_CLR = @compileError("unable to translate C expr: expected ')' instead got '&='"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/select.h:34:9
 pub inline fn __FD_ISSET(d: anytype, s: anytype) @TypeOf((__FDS_BITS(s)[@as(usize, @intCast(__FD_ELT(d)))] & __FD_MASK(d)) != @as(c_int, 0)) {
     _ = &d;
     _ = &s;
@@ -1713,7 +1741,7 @@ pub const __ONCE_ALIGNMENT = "";
 pub const _BITS_ATOMIC_WIDE_COUNTER_H = "";
 pub const _THREAD_MUTEX_INTERNAL_H = @as(c_int, 1);
 pub const __PTHREAD_MUTEX_HAVE_PREV = @as(c_int, 1);
-pub const __PTHREAD_MUTEX_INITIALIZER = @compileError("unable to translate C expr: unexpected token '{'"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\bits/struct_mutex.h:63:10
+pub const __PTHREAD_MUTEX_INITIALIZER = @compileError("unable to translate C expr: unexpected token '{'"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/struct_mutex.h:63:10
 pub const _RWLOCK_INTERNAL_H = "";
 pub inline fn __PTHREAD_RWLOCK_INITIALIZER(__flags: anytype) @TypeOf(__flags) {
     _ = &__flags;
@@ -1731,7 +1759,7 @@ pub inline fn __PTHREAD_RWLOCK_INITIALIZER(__flags: anytype) @TypeOf(__flags) {
         break :blk __flags;
     };
 }
-pub const __ONCE_FLAG_INIT = @compileError("unable to translate C expr: unexpected token '{'"); // C:\Users\Turtle\AppData\Local\zig\p\N-V-__8AAJJumRWcsv0AK_qXZrr5O7edmQ1ZH8cqAJ931xB5\lib\libc\include\generic-glibc\bits/thread-shared-types.h:114:9
+pub const __ONCE_FLAG_INIT = @compileError("unable to translate C expr: unexpected token '{'"); // C:\Users\Turtle\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\x86_64-windows-0.16.0\lib\libc\include\generic-glibc\bits/thread-shared-types.h:114:9
 pub const __have_pthread_attr_t = @as(c_int, 1);
 pub const ZIP_EXPORT = "";
 pub const ZIP_ENABLE_INFLATE = @as(c_int, 1);

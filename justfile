@@ -1,14 +1,14 @@
 release:
   @rm -rf lib/
   @mkdir -p lib/
-  just build x86_64-windows-gnu
-  just build aarch64-linux-gnu
+  just build x86_64-windows-gnu ReleaseFast
+  just build aarch64-linux-gnu ReleaseFast
 
-translate target='native':
+translate target='native' optimize='Debug':
   @rm -rf zig-out/
-  zig build --build-file dev.build.zig translate build-c -Dtarget={{target}}
+  zig build --build-file dev.build.zig translate build-c -Dtarget={{target}} -Doptimize={{optimize}}
 
-build target='native': (translate target)
+build target='native' optimize='Debug': (translate target optimize)
   @cp zig-out/lib/* lib/
 
 test: build
